@@ -6,32 +6,48 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from app.models.download_request import DownloadRequest
 from app.controllers.download_controller import DownloadController
 from app.services.youtube_service import YoutubeService
+from app.exceptions.video_download_exceptions import VideoDownloadError
 
 def main():
     youtube_service = YoutubeService()
     download_controller = DownloadController(youtube_service)
 
-    url = input("Pega la URL de YouTube: ").strip()
-    video = download_controller.get_video(url)
-    options = download_controller.get_download_options(video)
+    while True:
+        url = input("Pega la URL de YouTube (o 'salir'): ").strip()
+        if url.lower() == "salir":
+            return
+        
+        try:
+            video = download_controller.get_video(url)
+        except VideoDownloadError as e:
+            print(f"\n⚠ {e}\n")
+            continue
+        
+        options = download_controller.get_download_options(video)
 
-    print(f"\nTítulo : {video.title}")
-    print(f"Canal  : {video.uploader}")
-    print(f"Duración: {video.duration_seconds} segundos")
+        print(f"\nTítulo : {video.title}")
+        print(f"Canal  : {video.uploader}")
+        print(f"Duración: {video.duration_seconds} segundos")
 
-    for fmt in video.video_formats:
-        print(fmt)
+        for index, option in enumerate(options, start=1):
+            print(f"{index}. {option.label}")
 
-    for index, option in enumerate(options, start=1):
-        print(f"{index}. {option.label}")
-    
-    selected = int(input("\nSeleccione una opción: ")) - 1
+        try:
+            selected = int(input("\nSeleccione una opción: ")) - 1
+            selected_option = options[selected]
+        except (ValueError, IndexError):
+            print("\n⚠ Opción inválida.\n")
+            continue
 
-    selected_option = options[selected]
+        request = DownloadRequest(url=url, output_directory=Path("downloads"), options=selected_option)
 
-    request = DownloadRequest(url=url, output_directory=Path("downloads"), options=selected_option)
+        try:
+            download_controller.download(request)
+            print("\n✔ Descarga completada.\n")
+        except VideoDownloadError as e:
+            print(f"\n⚠ {e}\n")
 
-    download_controller.download(request)
+        break
 
 if __name__ == "__main__":
     main()
