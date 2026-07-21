@@ -1,0 +1,5 @@
+{
+  "download_directory": "downloads",
+  "default_quality": "best",
+  "ffmpeg_path": "tools/ffmpeg"
+}

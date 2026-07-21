@@ -2,11 +2,13 @@ from pathlib import Path
 
 import yt_dlp
 from app.models.video import Video
+from app.models.settings import Settings
 from app.models.download_option import DownloadOption
-from app.services.video_format_parser import VideoFormatParser
-from app.services.format_selector import FormatSelector
-from app.services.download_option_builder import DownloadOptionBuilder
 from app.models.download_request import DownloadRequest
+from app.services.format_selector import FormatSelector
+from app.services.settings_service import SettingsService
+from app.services.video_format_parser import VideoFormatParser
+from app.services.download_option_builder import DownloadOptionBuilder
 
 
 from app.exceptions.video_download_exceptions import (
@@ -35,11 +37,13 @@ class YoutubeService:
             self,
             parser: VideoFormatParser | None = None,
             selector: FormatSelector | None = None,
-            builder: DownloadOptionBuilder | None = None
+            builder: DownloadOptionBuilder | None = None,
+            settings_service: SettingsService | None = None,
         ):
         self.parser = parser or VideoFormatParser()
         self.selector = selector or FormatSelector()
         self.builder = builder or DownloadOptionBuilder()
+        self.settings_service = settings_service or SettingsService()
     
     def get_video(self, url: str) -> Video:
         if not is_youtube_url(url):
@@ -67,10 +71,14 @@ class YoutubeService:
         return self.builder.build_options(video.video_formats, best_audio)
     
     def download(self, request: DownloadRequest) -> None:
-        if not Path("tools/ffmpeg/ffmpeg.exe").exists():
-            raise FFmpegNotFoundError("No se encontró ffmpeg en tools/ffmpeg. Reinstala la aplicación.")
+        settings = self.settings_service.load()
+
+        ffmpeg_exe = settings.ffmpeg_path / "ffmpeg.exe"
+
+        if not ffmpeg_exe.exists():
+            raise FFmpegNotFoundError("No se encontró ffmpeg. Reinstala la aplicación.")
         
-        options = self._build_download_options(request)
+        options = self._build_download_options(request, settings)
 
         try:
             with yt_dlp.YoutubeDL(options) as ydl:
@@ -91,11 +99,11 @@ class YoutubeService:
                 ) from e
             raise VideoNotFoundError("No se pudo obtener información del video. Verifica la URL.") from e
         
-    def _build_download_options(self, request: DownloadRequest) -> dict:
+    def _build_download_options(self, request: DownloadRequest, settings: Settings) -> dict:
         return {
             "format": request.options.format_string,
             "merge_output_format": "mp4",
-            "ffmpeg_location": str(Path("tools/ffmpeg")),
+            "ffmpeg_location": str(settings.ffmpeg_path),
             "outtmpl": str(request.output_directory / "%(title)s.%(ext)s"),
             "noplaylist": True,
             "restrictfilenames": True,

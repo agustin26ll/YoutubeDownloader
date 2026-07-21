@@ -1,12 +1,9 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-
 @dataclass(slots=True)
+
 class Settings:
-
-    ffmpeg_path: Path
-
     download_directory: Path
-
-    merge_output_format: str = "mp4"
+    default_quality: str  # "best" | "1080" | "720" | "480" | "audio_only"
+    ffmpeg_path: Path
