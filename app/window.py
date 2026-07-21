@@ -1,12 +1,12 @@
 import os
 import webview
 
+from app.config.env import IS_DEV, VITE_DEV_URL
 from app.controllers.download_controller import DownloadController
 from app.services.youtube_service import YoutubeService
 
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _DIST_INDEX = os.path.join(_PROJECT_ROOT, "ui", "dist", "index.html")
-_DEV_MODE = os.environ.get("APP_ENV", "dev") == "dev"
 
 class API:
 
@@ -21,7 +21,7 @@ def launch_app():
     controller = DownloadController(youtube_service)
     api = API(controller)
 
-    url = "http://localhost:5173" if _DEV_MODE else _DIST_INDEX
+    url = VITE_DEV_URL if IS_DEV else _DIST_INDEX
 
     webview.create_window(
         title="YT DOWNLOADER",
