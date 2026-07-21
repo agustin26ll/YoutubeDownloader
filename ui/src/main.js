@@ -1,3 +1,5 @@
-window.addEventListener("pywebviewready", () => {
-    console.log("Bridge listo");
-});
+import "./styles/global.css";
+import "./app-root.js";
+
+const root = document.createElement("app-root");
+document.getElementById("app").appendChild(root);

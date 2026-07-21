@@ -1,0 +1,17 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body, #app {
+    height: 100%;
+}
+
+body {
+    background: var(--color-bg);
+    color: var(--color-text-primary);
+    font-family: var(--font-system);
+    font-size: var(--font-size-base);
+    overflow: hidden;
+}
