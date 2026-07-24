@@ -4,7 +4,7 @@ import styles from "/src/styles/components/download-options-panel.css?inline";
 export class DownloadOptionsPanel extends LitElement {
     static properties = {
         options: { type: Array },
-        selectedIndex: { type: Number, state: true },
+        selectedIndex: { type: Number }
     };
 
     static styles = css([styles]);

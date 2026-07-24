@@ -69,6 +69,11 @@ class YoutubeService:
         best_audio = self.selector.get_best_audio(video.audio_formats)
 
         return self.builder.build_options(video.video_formats, best_audio)
+
+    def get_audio_options(self, video: Video) -> list[DownloadOption]:
+        best_audio = self.selector.get_best_audio(video.audio_formats)
+
+        return self.builder.build_audio_options(best_audio)
     
     def download(self, request: DownloadRequest) -> None:
         settings = self.settings_service.load()
@@ -100,13 +105,28 @@ class YoutubeService:
             raise VideoNotFoundError("No se pudo obtener información del video. Verifica la URL.") from e
         
     def _build_download_options(self, request: DownloadRequest, settings: Settings) -> dict:
-        return {
-            "format": request.options.format_string,
-            "merge_output_format": "mp4",
+        base = {
             "ffmpeg_location": str(settings.ffmpeg_path),
             "outtmpl": str(request.output_directory / "%(title)s.%(ext)s"),
             "noplaylist": True,
             "restrictfilenames": True,
             "socket_timeout": 15,
         }
+
+        if request.options.is_audio:
+            base.update({
+                "format": "bestaudio/best",
+                "postprocessors": [{
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": "mp3",
+                    "preferredquality": "192",
+                }],
+            })
+        else:
+            base.update({
+                "format": request.options.format_string,
+                "merge_output_format": "mp4",
+            })
+
+        return base
         

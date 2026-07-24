@@ -25,3 +25,17 @@ class DownloadOptionBuilder:
             audio_format=audio_format,
             is_audio=False
         )
+
+    def build_audio_options(self, best_audio: VideoFormat | None) -> list[DownloadOption]:
+        if not best_audio:
+            return []
+
+        return [
+            DownloadOption(
+                label="MP3 (Audio)",
+                format_string=best_audio.format_id,
+                video_format=None,
+                audio_format=best_audio,
+                is_audio=True,
+            )
+        ]

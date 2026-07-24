@@ -14,7 +14,9 @@ export class HomeView extends LitElement {
         error: { type: String, state: true },
         downloadSuccess: { type: Boolean, state: true },
         video: { type: Object, state: true },
-        options: { type: Array, state: true },
+        videoOptions: { type: Array, state: true },
+        audioOptions: { type: Array, state: true },
+        mode: { type: String, state: true },
         selectedIndex: { type: Number, state: true },
         outputDirectory: { type: String, state: true },
     };
@@ -28,7 +30,9 @@ export class HomeView extends LitElement {
         this.error = null;
         this.downloadSuccess = false;
         this.video = null;
-        this.options = [];
+        this.videoOptions = [];
+        this.audioOptions = [];
+        this.mode = "video";
         this.selectedIndex = 0;
         this.outputDirectory = "";
     }
@@ -38,6 +42,7 @@ export class HomeView extends LitElement {
         this.addEventListener("search", this._handleSearch);
         this.addEventListener("option-selected", this._handleOptionSelected);
         this.addEventListener("folder-changed", this._handleFolderChanged);
+        this.addEventListener("mode-changed", this._handleModeChanged);
 
         const settings = await getSettings();
         this.outputDirectory = settings.download_directory;
@@ -48,6 +53,7 @@ export class HomeView extends LitElement {
         this.removeEventListener("search", this._handleSearch);
         this.removeEventListener("option-selected", this._handleOptionSelected);
         this.removeEventListener("folder-changed", this._handleFolderChanged);
+        this.removeEventListener("mode-changed", this._handleModeChanged);
     }
 
     _handleSearch = async (e) => {
@@ -66,7 +72,9 @@ export class HomeView extends LitElement {
         }
 
         this.video = result.video;
-        this.options = result.options;
+        this.videoOptions = result.video_options;
+        this.audioOptions = result.audio_options;
+        this.mode = "video";
         this.selectedIndex = 0;
     };
 
@@ -78,12 +86,21 @@ export class HomeView extends LitElement {
         this.outputDirectory = e.detail.path;
     };
 
+    _handleModeChanged = (e) => {
+        this.mode = e.detail.mode;
+        this.selectedIndex = 0;
+    };
+
+    get _currentOptions() {
+        return this.mode === "audio" ? this.audioOptions : this.videoOptions;
+    }
+
     _handleDownload = async () => {
         this.downloading = true;
         this.error = null;
         this.downloadSuccess = false;
 
-        const result = await downloadVideo(this.selectedIndex, this.outputDirectory);
+        const result = await downloadVideo(this.selectedIndex, this.outputDirectory, this.mode === "audio");
 
         this.downloading = false;
 
@@ -105,12 +122,16 @@ export class HomeView extends LitElement {
             ${this.video
                 ? html`
                       <video-preview-card .video=${this.video}></video-preview-card>
-                      <download-options-panel .options=${this.options}></download-options-panel>
+                      <format-toggle .mode=${this.mode}></format-toggle>
+                      <download-options-panel
+                          .options=${this._currentOptions}
+                          .selectedIndex=${this.selectedIndex}
+                      ></download-options-panel>
                       <folder-picker .path=${this.outputDirectory}></folder-picker>
                       <button
                           class="download-btn"
                           @click=${this._handleDownload}
-                          ?disabled=${this.downloading}
+                          ?disabled=${this.downloading || !this._currentOptions.length}
                       >
                           ${this.downloading ? "Descargando..." : "Descargar"}
                       </button>

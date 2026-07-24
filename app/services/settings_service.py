@@ -1,8 +1,9 @@
 import json
 from pathlib import Path
 from dataclasses import asdict
-
 from app.models.settings import Settings
+
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 _VALID_QUALITIES = {"best", "1080", "720", "480", "audio_only"}
 
@@ -11,7 +12,7 @@ class SettingsService:
     CONFIG_FILE = Path("app/config/settings.json")
 
     _DEFAULTS = Settings(
-        download_directory = Path("downloads"),
+        download_directory=_PROJECT_ROOT / "downloads",
         default_quality = "best",
         ffmpeg_path = Path("tools/ffmpeg"),
     )
@@ -47,7 +48,7 @@ class SettingsService:
         }
 
         self.CONFIG_FILE.write_text(
-            json.dumps(data, indent=2, ensure_ascci=False), encoding="utf-8"
+            json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
         )
 
     def update_download_directory(self, new_path: Path) -> Settings:
