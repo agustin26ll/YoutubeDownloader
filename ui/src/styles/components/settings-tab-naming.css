@@ -1,0 +1,95 @@
+:host {
+    display: block;
+}
+
+.tab-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+label {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+}
+
+input {
+    padding: 10px var(--space-md);
+    font-size: var(--font-size-base);
+    font-family: "SF Mono", monospace;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    outline: none;
+}
+
+input:focus {
+    border-color: var(--color-accent);
+}
+
+.preview {
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-bg);
+    border-radius: var(--radius);
+    font-size: var(--font-size-sm);
+}
+
+.preview-label {
+    color: var(--color-text-secondary);
+    margin-right: var(--space-sm);
+}
+
+.preview-value {
+    font-family: "SF Mono", monospace;
+    font-weight: 500;
+}
+
+.section-title {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-xs);
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+}
+
+.chip {
+    padding: 4px var(--space-sm);
+    font-size: 12px;
+    font-family: "SF Mono", monospace;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-surface);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.chip:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+.chip.static {
+    cursor: default;
+    color: var(--color-text-secondary);
+}
+
+.chip.static:hover {
+    border-color: var(--color-border);
+    color: var(--color-text-secondary);
+}
+
+.save-btn {
+    align-self: flex-start;
+    padding: var(--space-sm) var(--space-lg);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    border: none;
+    border-radius: var(--radius);
+    background: var(--color-accent);
+    color: white;
+    cursor: pointer;
+}

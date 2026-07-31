@@ -6,7 +6,23 @@ export async function getSettings() {
     return await window.pywebview.api.get_settings();
 }
 
-export async function createFolder(path) {
+export async function updateNamingExpression(expression) {
+    return await window.pywebview.api.update_naming_expression(expression);
+}
+
+export async function previewFilename(expression) {
+    return await window.pywebview.api.preview_filename(expression);
+}
+
+export async function updateAskFolderAlways(value) {
+    return await window.pywebview.api.update_ask_folder_always(value);
+}
+
+export async function updateAutoMaxQuality(value) {
+    return await window.pywebview.api.update_auto_max_quality(value);
+}
+
+export async function createFolder(path) {previewFilename
     return await window.pywebview.api.create_folder(path);
 }
 

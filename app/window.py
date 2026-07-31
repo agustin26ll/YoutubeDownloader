@@ -4,21 +4,34 @@ from dataclasses import asdict
 import webview
 
 from app.config.env import IS_DEV, VITE_DEV_URL
+from app.models.video import Video
 from app.models.download_request import DownloadRequest
 from app.controllers.download_controller import DownloadController
 from app.services.youtube_service import YoutubeService
 from app.services.settings_service import SettingsService
+from app.services.filename_formatter import FilenameFormatter
 from app.exceptions.video_download_exceptions import VideoDownloadError
 
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _DIST_INDEX = os.path.join(_PROJECT_ROOT, "ui", "dist", "index.html")
+
+_SAMPLE_VIDEO = Video(
+    title="Bad Bunny - MONACO (Official Video)",
+    uploader="Bad Bunny",
+    duration_seconds=185,
+    thumbnail="",
+    webpage_url="",
+    artist="Bad Bunny",
+)
 
 class API:
 
     def __init__(self, controller: DownloadController, settings_service: SettingsService):
         self.controller = controller
         self.settings_service = settings_service
+        self.filename_formatter = FilenameFormatter()
         self._last_url = None
+        self._last_video = None
         self._last_video_options = []
         self._last_audio_options = []
 
@@ -26,6 +39,7 @@ class API:
     def get_video(self, url: str) -> dict:
         try:
             video = self.controller.get_video(url)
+            self._last_video = video
 
             video_options = self.controller.get_download_options(video)
             audio_options = self.controller.get_audio_options(video)
@@ -60,8 +74,28 @@ class API:
         return {
             "download_directory": str(settings.download_directory),
             "default_quality": settings.default_quality,
+            "naming_expression": settings.naming_expression,
+            "ask_folder_always": settings.ask_folder_always,
+            "auto_max_quality": settings.auto_max_quality,
         }
 
+    def update_naming_expression(self, expression: str) -> dict:
+        settings = self.settings_service.update_naming_expression(expression)
+        return {"success": True, "naming_expression": settings.naming_expression}
+
+    def preview_filename(self, expression: str) -> dict:
+        sample = self._last_video or _SAMPLE_VIDEO
+        filename = self.filename_formatter.build(sample, expression)
+        return {"filename": filename}
+
+    def update_ask_folder_always(self, value: bool) -> dict:
+        settings = self.settings_service.update_ask_folder_always(value)
+        return {"success": True, "ask_folder_always": settings.ask_folder_always}
+
+    def update_auto_max_quality(self, value: bool) -> dict:
+        settings = self.settings_service.update_auto_max_quality(value)
+        return {"success": True, "auto_max_quality": settings.auto_max_quality}
+    
     def create_folder(self, path: str) -> dict:
         try:
             Path(path).mkdir(parents=True, exist_ok=True)
