@@ -3,9 +3,9 @@ import styles from "/src/styles/components/sidebar-menu.css?inline";
 
 const MENU_ITEMS = [
     { id: "home", label: "Inicio", icon: "🏠" },
-    { id: "settings", label: "Configuración", icon: "⚙️" },
     { id: "donate", label: "Donar", icon: "❤️" },
     { id: "help", label: "Ayuda", icon: "❓" },
+    { id: "settings", label: "Configuración", icon: "⚙️" },
 ];
 
 export class SidebarMenu extends LitElement {
