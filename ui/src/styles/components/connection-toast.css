@@ -1,0 +1,35 @@
+:host {
+    position: fixed;
+    bottom: var(--space-lg);
+    right: var(--space-lg);
+    z-index: 1000;
+}
+
+.toast {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: white;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    animation: slide-in 250ms ease;
+}
+
+.toast.offline {
+    background: #D70015;
+}
+
+.toast.online {
+    background: #1A7A2E;
+}
+
+@keyframes slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

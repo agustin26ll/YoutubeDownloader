@@ -10,6 +10,7 @@ class Video:
     duration_seconds: int
     thumbnail: str
     webpage_url: str
+    artist: str | None = None
     video_formats: list[VideoFormat] = field(default_factory=list)
     audio_formats: list[VideoFormat] = field(default_factory=list)
     

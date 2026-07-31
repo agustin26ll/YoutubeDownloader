@@ -19,10 +19,18 @@
 .path {
     flex: 1;
     font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
+    color: var(--color-accent);
+    cursor: pointer;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    text-decoration: none;
+    transition: opacity var(--transition-base);
+}
+
+.path:hover {
+    opacity: 0.7;
+    text-decoration: underline;
 }
 
 button {
@@ -39,4 +47,16 @@ button {
 button:hover {
     border-color: var(--color-accent);
     color: var(--color-accent);
+}
+
+.warning {
+    margin-top: var(--space-md);
+    font-size: var(--font-size-sm);
+    color: #9A6700;
+}
+
+.warning a {
+    color: var(--color-accent);
+    cursor: pointer;
+    text-decoration: underline;
 }

@@ -61,6 +61,34 @@ class API:
             "download_directory": str(settings.download_directory),
             "default_quality": settings.default_quality,
         }
+
+    def create_folder(self, path: str) -> dict:
+        try:
+            Path(path).mkdir(parents=True, exist_ok=True)
+            return {"success": True}
+        except Exception:
+            return {"success": False, "error": "No se pudo crear la carpeta."}
+
+    def check_folder_exists(self, path: str) -> dict:
+        return {"exists": Path(path).exists()}
+
+    def open_folder(self, path: str) -> dict:
+        try:
+            folder = Path(path)
+            if not folder.exists():
+                return {
+                    "success": False,
+                    "error": "La carpeta no existe."
+                }
+
+            os.startfile(str(folder))
+
+            return {"success": True}
+        except Exception:
+            return {
+                "success": False,
+                "error": "No se pudo abrir la carpeta."
+            }
     
     def pick_folder(self) -> dict:
         result = webview.windows[0].create_file_dialog(webview.FOLDER_DIALOG)
@@ -82,21 +110,20 @@ class API:
 
         if not self._last_url or option_index >= len(options_list):
             return {"success": False, "error": "No hay un video seleccionado válido."}
-        
-        try:
-            resolved_dir = Path(output_directory).expanduser().resolve()
-            resolved_dir.mkdir(parents=True, exist_ok=True)
 
+        resolved_dir = Path(output_directory).expanduser().resolve()
+
+        if not resolved_dir.exists():
+            return {"success": False, "error": "La carpeta de destino ya no existe. Selecciónala de nuevo."}
+
+        try:
             request = DownloadRequest(
                 url=self._last_url,
                 output_directory=resolved_dir,
                 options=options_list[option_index],
             )
-
             self.controller.download(request)
-
             return {"success": True}
-        
         except VideoDownloadError as e:
             return {"success": False, "error": str(e), "error_type": type(e).__name__}
         except Exception:
@@ -105,8 +132,7 @@ class API:
                 "error": "Ocurrió un error inesperado durante la descarga.",
                 "error_type": "UnknownError",
             }
-
-
+        
 def launch_app():
     youtube_service = YoutubeService()
     settings_service = SettingsService()
