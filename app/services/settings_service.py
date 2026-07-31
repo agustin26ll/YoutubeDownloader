@@ -15,6 +15,7 @@ class SettingsService:
         download_directory=_PROJECT_ROOT / "downloads",
         default_quality="best",
         ffmpeg_path=_PROJECT_ROOT / "tools" / "ffmpeg",
+        naming_expression="{artist} - {title:title}",
     )
 
     def __init__(self):
@@ -31,7 +32,8 @@ class SettingsService:
             return Settings(
                 download_directory=Path(raw["download_directory"]),
                 default_quality=raw["default_quality"],
-                ffmpeg_path=Path(raw["ffmpeg_path"])
+                ffmpeg_path=Path(raw["ffmpeg_path"]),
+                naming_expression=raw.get("naming_expression", "{artist} - {title:title}"),
             )
         
         except (json.JSONDecodeError, KeyError, TypeError):
@@ -44,7 +46,8 @@ class SettingsService:
         data = {
             "download_directory": str(settings.download_directory),
             "default_quality": settings.default_quality,
-            "ffmpeg_path": str(settings.ffmpeg_path)
+            "ffmpeg_path": str(settings.ffmpeg_path),
+            "naming_expression": settings.naming_expression,
         }
 
         self.CONFIG_FILE.write_text(

@@ -7,3 +7,4 @@ class Settings:
     download_directory: Path
     default_quality: str  # "best" | "1080" | "720" | "480" | "audio_only"
     ffmpeg_path: Path
+    naming_expression: str = "{artist} - {title:title}"
