@@ -4,6 +4,7 @@ from dataclasses import asdict
 import webview
 
 from app.config.env import IS_DEV, VITE_DEV_URL
+from app.utils.system_folders import get_default_directory
 from app.models.video import Video
 from app.models.download_request import DownloadRequest
 from app.controllers.download_controller import DownloadController
@@ -70,12 +71,11 @@ class API:
         
     def get_settings(self) -> dict:
         settings = self.settings_service.load()
-
         return {
-            "download_directory": str(settings.download_directory),
+            "custom_directory": str(settings.download_directory),
+            "folder_mode": settings.folder_mode,
             "default_quality": settings.default_quality,
             "naming_expression": settings.naming_expression,
-            "ask_folder_always": settings.ask_folder_always,
             "auto_max_quality": settings.auto_max_quality,
         }
 
@@ -88,9 +88,13 @@ class API:
         filename = self.filename_formatter.build(sample, expression)
         return {"filename": filename}
 
-    def update_ask_folder_always(self, value: bool) -> dict:
-        settings = self.settings_service.update_ask_folder_always(value)
-        return {"success": True, "ask_folder_always": settings.ask_folder_always}
+    def get_default_directory(self, is_audio: bool) -> dict:
+        path = get_default_directory(is_audio)
+        return {"path": str(path), "exists": path.exists()}
+
+    def update_folder_mode(self, mode: str) -> dict:
+        settings = self.settings_service.update_folder_mode(mode)
+        return {"success": True, "folder_mode": settings.folder_mode}
 
     def update_auto_max_quality(self, value: bool) -> dict:
         settings = self.settings_service.update_auto_max_quality(value)

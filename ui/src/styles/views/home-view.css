@@ -43,3 +43,12 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+.auto-quality-hint,
+.ask-folder-hint {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    background: var(--color-bg);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius);
+}

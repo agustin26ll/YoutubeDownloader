@@ -5,8 +5,12 @@ import "../components/video-preview-card.js";
 import "../components/download-options-panel.js";
 import "../components/folder-picker.js";
 import "../components/format-toggle.js";
-
-import { getVideoInfo, getSettings, downloadVideo } from "../services/api-bridge.js";
+import {
+    getVideoInfo,
+    getSettings,
+    getDefaultDirectory,
+    downloadVideo,
+} from "../services/api-bridge.js";
 
 export class HomeView extends LitElement {
     static properties = {
@@ -19,8 +23,10 @@ export class HomeView extends LitElement {
         audioOptions: { type: Array, state: true },
         mode: { type: String, state: true },
         selectedIndex: { type: Number, state: true },
-        outputDirectory: { type: String, state: true },
-        folderReady: { type: Boolean, state: true },
+        folderMode: { type: String, state: true },
+        customDirectory: { type: String, state: true },
+        defaultDirectory: { type: String, state: true },
+        autoMaxQuality: { type: Boolean, state: true },
     };
 
     static styles = css([styles]);
@@ -36,8 +42,11 @@ export class HomeView extends LitElement {
         this.audioOptions = [];
         this.mode = "video";
         this.selectedIndex = 0;
-        this.outputDirectory = "";
-        this.folderReady = true;
+        this.folderMode = "default";
+        this.customDirectory = "";
+        this.defaultDirectory = "";
+        this.autoMaxQuality = false;
+        this._handleSettingsUpdated = this._loadSettings.bind(this);
     }
 
     async connectedCallback() {
@@ -46,10 +55,10 @@ export class HomeView extends LitElement {
         this.addEventListener("option-selected", this._handleOptionSelected);
         this.addEventListener("folder-changed", this._handleFolderChanged);
         this.addEventListener("mode-changed", this._handleModeChanged);
-        this.addEventListener("folder-status", this._handleFolderStatus);
+        this.addEventListener("folder-status", () => { });
+        window.addEventListener("settings-updated", this._handleSettingsUpdated);
 
-        const settings = await getSettings();
-        this.outputDirectory = settings.download_directory;
+        await this._loadSettings();
     }
 
     disconnectedCallback() {
@@ -58,6 +67,25 @@ export class HomeView extends LitElement {
         this.removeEventListener("option-selected", this._handleOptionSelected);
         this.removeEventListener("folder-changed", this._handleFolderChanged);
         this.removeEventListener("mode-changed", this._handleModeChanged);
+        window.removeEventListener("settings-updated", this._handleSettingsUpdated);
+    }
+
+    async _loadSettings() {
+        const settings = await getSettings();
+        this.folderMode = settings.folder_mode;
+        this.customDirectory = settings.custom_directory;
+        this.autoMaxQuality = settings.auto_max_quality;
+        await this._refreshDefaultDirectory();
+    }
+
+    async _refreshDefaultDirectory() {
+        if (this.folderMode !== "default") return;
+        const result = await getDefaultDirectory(this.mode === "audio");
+        this.defaultDirectory = result.path;
+    }
+
+    get _outputDirectory() {
+        return this.folderMode === "manual" ? this.customDirectory : this.defaultDirectory;
     }
 
     _handleSearch = async (e) => {
@@ -79,7 +107,7 @@ export class HomeView extends LitElement {
         this.videoOptions = result.video_options;
         this.audioOptions = result.audio_options;
         this.mode = "video";
-        this.selectedIndex = 0;
+        this.selectedIndex = this.autoMaxQuality ? this.videoOptions.length - 1 : 0;
     };
 
     _handleOptionSelected = (e) => {
@@ -87,16 +115,13 @@ export class HomeView extends LitElement {
     };
 
     _handleFolderChanged = (e) => {
-        this.outputDirectory = e.detail.path;
+        this.customDirectory = e.detail.path;
     };
 
-    _handleModeChanged = (e) => {
+    _handleModeChanged = async (e) => {
         this.mode = e.detail.mode;
-        this.selectedIndex = 0;
-    };
-
-    _handleFolderStatus = (e) => {
-        this.folderReady = e.detail.ready;
+        this.selectedIndex = this.autoMaxQuality && this.mode === "video" ? this.videoOptions.length - 1 : 0;
+        await this._refreshDefaultDirectory();
     };
 
     get _currentOptions() {
@@ -106,14 +131,13 @@ export class HomeView extends LitElement {
     _handleDownload = async () => {
         const picker = this.renderRoot.querySelector("folder-picker");
         const ready = picker ? await picker.checkNow() : true;
-
         if (!ready) return;
 
         this.downloading = true;
         this.error = null;
         this.downloadSuccess = false;
 
-        const result = await downloadVideo(this.selectedIndex, this.outputDirectory, this.mode === "audio");
+        const result = await downloadVideo(this.selectedIndex, this._outputDirectory, this.mode === "audio");
 
         this.downloading = false;
 
@@ -127,31 +151,37 @@ export class HomeView extends LitElement {
 
     render() {
         return html`
-        <url-search-bar .loading=${this.loading}></url-search-bar>
+            <url-search-bar .loading=${this.loading}></url-search-bar>
 
-        ${this.video
+            ${this.video
                 ? html`
-                  <video-preview-card .video=${this.video}></video-preview-card>
-                  <format-toggle .mode=${this.mode}></format-toggle>
-                  <download-options-panel
-                      .options=${this._currentOptions}
-                      .selectedIndex=${this.selectedIndex}
-                  ></download-options-panel>
-                  <folder-picker .path=${this.outputDirectory}></folder-picker>
+                      <video-preview-card .video=${this.video}></video-preview-card>
+                      <format-toggle .mode=${this.mode}></format-toggle>
 
-                  ${this.error ? html`<p class="error">${this.error}</p>` : ""}
-                  ${this.downloadSuccess ? html`<p class="success">Descarga completada.</p>` : ""}
+                      ${html`<download-options-panel
+                                .options=${this._currentOptions}
+                                .selectedIndex=${this.selectedIndex}
+                                .disabled=${this.autoMaxQuality && this.mode === "video"}
+                            ></download-options-panel>`}
 
-                  <button
-                      class="download-btn"
-                      @click=${this._handleDownload}
-                      ?disabled=${this.downloading || !this._currentOptions.length}
-                  >
-                      ${this.downloading ? "Descargando..." : "Descargar"}
-                  </button>
-              `
+                      <folder-picker
+                          .path=${this._outputDirectory}
+                          .editable=${this.folderMode === "manual"}
+                      ></folder-picker>
+
+                      ${this.error ? html`<p class="error">${this.error}</p>` : ""}
+                      ${this.downloadSuccess ? html`<p class="success">Descarga completada.</p>` : ""}
+
+                      <button
+                          class="download-btn"
+                          @click=${this._handleDownload}
+                          ?disabled=${this.downloading || !this._currentOptions.length}
+                      >
+                          ${this.downloading ? "Descargando..." : "Descargar"}
+                      </button>
+                  `
                 : ""}
-    `;
+        `;
     }
 }
 

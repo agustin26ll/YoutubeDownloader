@@ -14,8 +14,12 @@ export async function previewFilename(expression) {
     return await window.pywebview.api.preview_filename(expression);
 }
 
-export async function updateAskFolderAlways(value) {
-    return await window.pywebview.api.update_ask_folder_always(value);
+export async function updateFolderMode(mode) {
+    return await window.pywebview.api.update_folder_mode(mode);
+}
+
+export async function getDefaultDirectory(isAudio) {
+    return await window.pywebview.api.get_default_directory(isAudio);
 }
 
 export async function updateAutoMaxQuality(value) {

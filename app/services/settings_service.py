@@ -16,7 +16,7 @@ class SettingsService:
         default_quality="best",
         ffmpeg_path=_PROJECT_ROOT / "tools" / "ffmpeg",
         naming_expression="{artist} - {title:title}",
-        ask_folder_always=False,
+        folder_mode="default",
         auto_max_quality=False,
     )
 
@@ -36,7 +36,7 @@ class SettingsService:
                 default_quality=raw["default_quality"],
                 ffmpeg_path=Path(raw["ffmpeg_path"]),
                 naming_expression=raw.get("naming_expression", "{artist} - {title:title}"),
-                ask_folder_always=raw.get("ask_folder_always", False),
+                folder_mode=raw.get("folder_mode", "default"),
                 auto_max_quality=raw.get("auto_max_quality", False),
             )
         
@@ -52,7 +52,7 @@ class SettingsService:
             "default_quality": settings.default_quality,
             "ffmpeg_path": str(settings.ffmpeg_path),
             "naming_expression": settings.naming_expression,
-            "ask_folder_always": settings.ask_folder_always,
+            "folder_mode": settings.folder_mode,
             "auto_max_quality": settings.auto_max_quality,
         }
 
@@ -78,9 +78,12 @@ class SettingsService:
         self.save(settings)
         return settings
 
-    def update_ask_folder_always(self, value: bool) -> Settings:
+    def update_folder_mode(self, mode: str) -> Settings:
+        if mode not in ("default", "manual"):
+            raise ValueError(f"Modo de carpeta inválido: {mode}")
+
         settings = self.load()
-        settings.ask_folder_always = value
+        settings.folder_mode = mode
         self.save(settings)
         return settings
 

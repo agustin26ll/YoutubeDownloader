@@ -14,3 +14,5 @@ class DownloadOption:
     format_string: str
 
     is_audio: bool
+
+    audio_codec: str | None = None

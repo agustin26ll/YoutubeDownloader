@@ -121,7 +121,7 @@ class YoutubeService:
                 "format": "bestaudio/best",
                 "postprocessors": [{
                     "key": "FFmpegExtractAudio",
-                    "preferredcodec": "mp3",
+                    "preferredcodec": request.options.audio_codec,
                     "preferredquality": "192",
                 }],
             })

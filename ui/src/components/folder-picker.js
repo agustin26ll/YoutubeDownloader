@@ -5,6 +5,7 @@ import { pickFolder, openFolder, checkFolderExists, createFolder } from "../serv
 export class FolderPicker extends LitElement {
     static properties = {
         path: { type: String },
+        editable: { type: Boolean },
         folderMissing: { type: Boolean, state: true },
     };
 
@@ -12,7 +13,14 @@ export class FolderPicker extends LitElement {
 
     constructor() {
         super();
+        this.editable = true;
         this.folderMissing = false;
+    }
+
+    updated(changedProps) {
+        if (changedProps.has("path") && this.path) {
+            this.checkNow();
+        }
     }
 
     async checkNow() {
@@ -20,12 +28,6 @@ export class FolderPicker extends LitElement {
         this.folderMissing = !result.exists;
         this._notifyReadiness();
         return !this.folderMissing;
-    }
-
-    updated(changedProps) {
-        if (changedProps.has("path") && this.path) {
-            this.checkNow();
-        }
     }
 
     _notifyReadiness() {
@@ -74,14 +76,14 @@ export class FolderPicker extends LitElement {
                 <span class="path" title="Abrir en el Explorador" @click=${this._handleOpenFolder}>
                     ${this.path || "Selecciona una carpeta"}
                 </span>
-                <button @click=${this._handleBrowse}>Examinar</button>
+                ${this.editable ? html`<button @click=${this._handleBrowse}>Examinar</button>` : ""}
             </div>
             ${this.folderMissing
                 ? html`
                       <p class="warning">
                           ⚠ Esta carpeta ya no existe.
                           <a @click=${this._handleRecreate}>Crearla de nuevo</a>
-                          o selecciona otra.
+                          ${this.editable ? "o selecciona otra." : ""}
                       </p>
                   `
                 : ""}

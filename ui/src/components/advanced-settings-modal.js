@@ -16,7 +16,7 @@ export class AdvancedSettingsModal extends LitElement {
         open: { type: Boolean, reflect: true },
         activeTab: { type: String, state: true },
         namingExpression: { type: String, state: true },
-        askFolderAlways: { type: Boolean, state: true },
+        folderMode: { type: String, state: true },
         autoMaxQuality: { type: Boolean, state: true },
     };
 
@@ -47,7 +47,7 @@ export class AdvancedSettingsModal extends LitElement {
     async show() {
         const settings = await getSettings();
         this.namingExpression = settings.naming_expression;
-        this.askFolderAlways = settings.ask_folder_always;
+        this.folderMode = settings.folder_mode;
         this.autoMaxQuality = settings.auto_max_quality;
         this.open = true;
     }
@@ -65,7 +65,7 @@ export class AdvancedSettingsModal extends LitElement {
             case "naming":
                 return html`<settings-tab-naming .expression=${this.namingExpression}></settings-tab-naming>`;
             case "folder":
-                return html`<settings-tab-folder .askFolderAlways=${this.askFolderAlways}></settings-tab-folder>`;
+                return html`<settings-tab-folder .folderMode=${this.folderMode}></settings-tab-folder>`;
             case "quality":
                 return html`<settings-tab-quality .autoMaxQuality=${this.autoMaxQuality}></settings-tab-quality>`;
         }
