@@ -89,8 +89,8 @@ class API:
 
             request = DownloadRequest(
                 url=self._last_url,
-                output_directory=Path(output_directory),
-                options=options_list[option_index]
+                output_directory=resolved_dir,
+                options=options_list[option_index],
             )
 
             self.controller.download(request)

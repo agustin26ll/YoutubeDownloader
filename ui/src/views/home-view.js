@@ -4,8 +4,9 @@ import "../components/url-search-bar.js";
 import "../components/video-preview-card.js";
 import "../components/download-options-panel.js";
 import "../components/folder-picker.js";
-import { getVideoInfo, getSettings, downloadVideo } from "../services/api-bridge.js";
+import "../components/format-toggle.js";
 
+import { getVideoInfo, getSettings, downloadVideo } from "../services/api-bridge.js";
 
 export class HomeView extends LitElement {
     static properties = {

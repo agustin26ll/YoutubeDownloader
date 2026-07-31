@@ -10,6 +10,6 @@ export async function pickFolder() {
     return await window.pywebview.api.pick_folder();
 }
 
-export async function downloadVideo(optionIndex, outputDirectory) {
-    return await window.pywebview.api.download(optionIndex, outputDirectory);
+export async function downloadVideo(optionIndex, outputDirectory, isAudio) {
+    return await window.pywebview.api.download(optionIndex, outputDirectory, isAudio);
 }

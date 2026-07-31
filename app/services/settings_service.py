@@ -13,8 +13,8 @@ class SettingsService:
 
     _DEFAULTS = Settings(
         download_directory=_PROJECT_ROOT / "downloads",
-        default_quality = "best",
-        ffmpeg_path = Path("tools/ffmpeg"),
+        default_quality="best",
+        ffmpeg_path=_PROJECT_ROOT / "tools" / "ffmpeg",
     )
 
     def __init__(self):
