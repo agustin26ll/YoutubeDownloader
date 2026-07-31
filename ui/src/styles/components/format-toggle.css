@@ -1,0 +1,29 @@
+:host {
+    display: block;
+}
+
+.toggle {
+    display: inline-flex;
+    background: var(--color-bg);
+    border-radius: var(--radius);
+    padding: 4px;
+    gap: 4px;
+}
+
+button {
+    padding: var(--space-xs) var(--space-md);
+    font-size: var(--font-size-sm);
+    font-family: var(--font-system);
+    border: none;
+    border-radius: calc(var(--radius) - 4px);
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+button.active {
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    font-weight: 500;
+}

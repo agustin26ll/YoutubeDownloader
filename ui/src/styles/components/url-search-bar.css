@@ -1,0 +1,46 @@
+:host {
+    display: block;
+}
+
+form {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+input {
+    flex: 1;
+    padding: 12px var(--space-md);
+    font-size: var(--font-size-base);
+    font-family: var(--font-system);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    outline: none;
+    transition: border-color var(--transition-base);
+}
+
+input:focus {
+    border-color: var(--color-accent);
+}
+
+button {
+    padding: 12px var(--space-lg);
+    font-size: var(--font-size-base);
+    font-family: var(--font-system);
+    font-weight: 500;
+    border: none;
+    border-radius: var(--radius);
+    background: var(--color-accent);
+    color: white;
+    cursor: pointer;
+    transition: opacity var(--transition-base);
+}
+
+button:hover {
+    opacity: 0.85;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

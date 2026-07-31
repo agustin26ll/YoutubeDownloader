@@ -1,0 +1,65 @@
+:host {
+    display: block;
+}
+
+.card {
+    background: var(--color-surface);
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+}
+
+.thumbnail-wrapper {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: #000;
+}
+
+.thumbnail-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    cursor: pointer;
+}
+
+.thumbnail-wrapper iframe {
+    width: 100%;
+    height: 100%;
+}
+
+.play-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    color: white;
+    background: rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    transition: background var(--transition-base);
+}
+
+.play-overlay:hover {
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.info {
+    padding: var(--space-md);
+}
+
+.info h3 {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin-bottom: var(--space-xs);
+}
+
+.uploader {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.duration {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}

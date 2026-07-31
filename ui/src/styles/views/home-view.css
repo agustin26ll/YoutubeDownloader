@@ -1,0 +1,45 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.error {
+    color: #D70015;
+    background: #FFF0EE;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius);
+    font-size: var(--font-size-sm);
+}
+
+.success {
+    color: #1A7A2E;
+    background: #EAF7ED;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius);
+    font-size: var(--font-size-sm);
+}
+
+.download-btn {
+    padding: 14px;
+    font-size: var(--font-size-base);
+    font-family: var(--font-system);
+    font-weight: 600;
+    border: none;
+    border-radius: var(--radius);
+    background: var(--color-accent);
+    color: white;
+    cursor: pointer;
+    transition: opacity var(--transition-base);
+}
+
+.download-btn:hover {
+    opacity: 0.85;
+}
+
+.download-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
