@@ -20,6 +20,7 @@ export class HomeView extends LitElement {
         mode: { type: String, state: true },
         selectedIndex: { type: Number, state: true },
         outputDirectory: { type: String, state: true },
+        folderReady: { type: Boolean, state: true },
     };
 
     static styles = css([styles]);
@@ -36,6 +37,7 @@ export class HomeView extends LitElement {
         this.mode = "video";
         this.selectedIndex = 0;
         this.outputDirectory = "";
+        this.folderReady = true;
     }
 
     async connectedCallback() {
@@ -44,6 +46,7 @@ export class HomeView extends LitElement {
         this.addEventListener("option-selected", this._handleOptionSelected);
         this.addEventListener("folder-changed", this._handleFolderChanged);
         this.addEventListener("mode-changed", this._handleModeChanged);
+        this.addEventListener("folder-status", this._handleFolderStatus);
 
         const settings = await getSettings();
         this.outputDirectory = settings.download_directory;
@@ -92,11 +95,20 @@ export class HomeView extends LitElement {
         this.selectedIndex = 0;
     };
 
+    _handleFolderStatus = (e) => {
+        this.folderReady = e.detail.ready;
+    };
+
     get _currentOptions() {
         return this.mode === "audio" ? this.audioOptions : this.videoOptions;
     }
 
     _handleDownload = async () => {
+        const picker = this.renderRoot.querySelector("folder-picker");
+        const ready = picker ? await picker.checkNow() : true;
+
+        if (!ready) return;
+
         this.downloading = true;
         this.error = null;
         this.downloadSuccess = false;
@@ -115,30 +127,31 @@ export class HomeView extends LitElement {
 
     render() {
         return html`
-            <url-search-bar .loading=${this.loading}></url-search-bar>
+        <url-search-bar .loading=${this.loading}></url-search-bar>
 
-            ${this.error ? html`<p class="error">${this.error}</p>` : ""}
-            ${this.downloadSuccess ? html`<p class="success">Descarga completada.</p>` : ""}
-
-            ${this.video
+        ${this.video
                 ? html`
-                      <video-preview-card .video=${this.video}></video-preview-card>
-                      <format-toggle .mode=${this.mode}></format-toggle>
-                      <download-options-panel
-                          .options=${this._currentOptions}
-                          .selectedIndex=${this.selectedIndex}
-                      ></download-options-panel>
-                      <folder-picker .path=${this.outputDirectory}></folder-picker>
-                      <button
-                          class="download-btn"
-                          @click=${this._handleDownload}
-                          ?disabled=${this.downloading || !this._currentOptions.length}
-                      >
-                          ${this.downloading ? "Descargando..." : "Descargar"}
-                      </button>
-                  `
+                  <video-preview-card .video=${this.video}></video-preview-card>
+                  <format-toggle .mode=${this.mode}></format-toggle>
+                  <download-options-panel
+                      .options=${this._currentOptions}
+                      .selectedIndex=${this.selectedIndex}
+                  ></download-options-panel>
+                  <folder-picker .path=${this.outputDirectory}></folder-picker>
+
+                  ${this.error ? html`<p class="error">${this.error}</p>` : ""}
+                  ${this.downloadSuccess ? html`<p class="success">Descarga completada.</p>` : ""}
+
+                  <button
+                      class="download-btn"
+                      @click=${this._handleDownload}
+                      ?disabled=${this.downloading || !this._currentOptions.length}
+                  >
+                      ${this.downloading ? "Descargando..." : "Descargar"}
+                  </button>
+              `
                 : ""}
-        `;
+    `;
     }
 }
 

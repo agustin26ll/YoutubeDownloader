@@ -53,6 +53,7 @@ export class AppRoot extends LitElement {
         return html`
             <sidebar-menu></sidebar-menu>
             <div class="content">${this._renderView()}</div>
+            <connection-toast></connection-toast>
         `;
     }
 }
