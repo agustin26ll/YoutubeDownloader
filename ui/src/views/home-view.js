@@ -46,7 +46,7 @@ export class HomeView extends LitElement {
         this.customDirectory = "";
         this.defaultDirectory = "";
         this.autoMaxQuality = false;
-        this._handleSettingsUpdated = this._loadSettings.bind(this);
+        this._handleSettingsUpdated = this._handleSettingsUpdated.bind(this);
     }
 
     async connectedCallback() {
@@ -55,10 +55,9 @@ export class HomeView extends LitElement {
         this.addEventListener("option-selected", this._handleOptionSelected);
         this.addEventListener("folder-changed", this._handleFolderChanged);
         this.addEventListener("mode-changed", this._handleModeChanged);
-        this.addEventListener("folder-status", () => { });
         window.addEventListener("settings-updated", this._handleSettingsUpdated);
-
-        await this._loadSettings();
+        
+        this._loadSettings();
     }
 
     disconnectedCallback() {
@@ -68,6 +67,20 @@ export class HomeView extends LitElement {
         this.removeEventListener("folder-changed", this._handleFolderChanged);
         this.removeEventListener("mode-changed", this._handleModeChanged);
         window.removeEventListener("settings-updated", this._handleSettingsUpdated);
+    }
+
+    async _handleSettingsUpdated(e) {
+        const { folder_mode, auto_max_quality } = e.detail;
+
+        if (folder_mode !== undefined) {
+            this.folderMode = folder_mode;
+            await this._refreshDefaultDirectory();
+        }
+
+        if (auto_max_quality !== undefined) {
+            this.autoMaxQuality = auto_max_quality;
+            this._applyQualityDefault();
+        }
     }
 
     async _loadSettings() {

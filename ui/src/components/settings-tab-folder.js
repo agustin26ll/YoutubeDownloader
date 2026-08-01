@@ -30,7 +30,10 @@ export class SettingsTabFolder extends LitElement {
 
         this.folderMode = mode;
         await updateFolderMode(mode);
-        window.dispatchEvent(new CustomEvent("settings-updated"));
+
+        window.dispatchEvent(
+            new CustomEvent("settings-updated", { detail: { folder_mode: mode } })
+        );
     }
 
     _openPath(path) {
