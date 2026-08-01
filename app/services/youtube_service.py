@@ -116,7 +116,7 @@ class YoutubeService:
 
         return self.builder.build_audio_options(best_audio)
     
-    def download(self, request: DownloadRequest) -> None:
+    def download(self, request: DownloadRequest, progress_callback = None) -> None:
         settings = self.settings_service.load()
         ffmpeg_exe = settings.ffmpeg_path / "ffmpeg.exe"
 
@@ -127,6 +127,10 @@ class YoutubeService:
         filename = self.filename_formatter.build(video, settings.naming_expression)
 
         options = self._build_download_options(request, settings, filename)
+
+        if progress_callback:
+            options["progress_hooks"] = [progress_callback]
+                                     
         try:
             with yt_dlp.YoutubeDL(options) as ydl:
                 ydl.download([request.url])

@@ -17,5 +17,5 @@ class DownloadController:
     def get_audio_options(self, video: Video) -> list[DownloadOption]:
         return self.youtube_service.get_audio_options(video)
     
-    def download(self, request: DownloadRequest) -> str:
-        return self.youtube_service.download(request)
+    def download(self, request: DownloadRequest, progress_callback=None) -> str:
+        return self.youtube_service.download(request, progress_callback)

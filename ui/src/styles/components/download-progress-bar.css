@@ -1,0 +1,71 @@
+:host {
+    display: block;
+}
+
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.bar-track {
+    height: 8px;
+    background: var(--color-bg);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    background: var(--color-accent);
+    border-radius: 20px;
+    transition: width 200ms ease;
+}
+
+.bar-fill.processing {
+    background: repeating-linear-gradient(
+        45deg,
+        var(--color-accent),
+        var(--color-accent) 10px,
+        rgba(0, 113, 227, 0.6) 10px,
+        rgba(0, 113, 227, 0.6) 20px
+    );
+    width: 100% !important;
+    animation: stripes 1s linear infinite;
+}
+
+.bar-fill.completed {
+    background: #1A7A2E;
+}
+
+.bar-fill.error {
+    background: #D70015;
+}
+
+@keyframes stripes {
+    from { background-position: 0 0; }
+    to { background-position: 28px 0; }
+}
+
+.info {
+    display: flex;
+    gap: var(--space-md);
+    font-size: 11px;
+    color: var(--color-text-secondary);
+}
+
+.percent {
+    margin-left: auto;
+    font-weight: 500;
+    color: var(--color-text-primary);
+}
+
+.done {
+    color: #1A7A2E;
+    font-weight: 500;
+}
+
+.error-text {
+    color: #D70015;
+    font-weight: 500;
+}
