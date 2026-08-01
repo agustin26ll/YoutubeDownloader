@@ -5,6 +5,8 @@ import "../components/video-preview-card.js";
 import "../components/download-options-panel.js";
 import "../components/folder-picker.js";
 import "../components/format-toggle.js";
+import "../components/download-progress-bar.js";
+
 import {
     getVideoInfo,
     getSettings,
@@ -188,15 +190,19 @@ export class HomeView extends LitElement {
                           .editable=${this.folderMode === "manual"}
                       ></folder-picker>
 
+                      ${this.downloading || this.downloadSuccess
+                        ? html`<download-progress-bar .active=${this.downloading}></download-progress-bar>`
+                        : ""}
+
                       ${this.error ? html`<p class="error">${this.error}</p>` : ""}
                       ${this.downloadSuccess ? html`<p class="success">Descarga completada.</p>` : ""}
 
                       <button
-                          class="download-btn"
-                          @click=${this._handleDownload}
-                          ?disabled=${this.downloading || !this._currentOptions.length}
-                      >
-                          ${this.downloading ? "Descargando..." : "Descargar"}
+                        class="download-btn"
+                        @click=${this._handleDownload}
+                        ?disabled=${this.downloading || !this._currentOptions.length}
+                    >
+                        ${this.downloading ? "Descargando..." : "Descargar"}
                       </button>
                   `
                 : ""}

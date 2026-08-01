@@ -3,6 +3,8 @@ from pathlib import Path
 from dataclasses import asdict
 import webview
 import subprocess
+import time
+import json
 
 from app.config.env import IS_DEV, VITE_DEV_URL
 from app.controllers.download_controller import DownloadController
@@ -100,21 +102,55 @@ class API:
         except Exception:
             return {"success": False, "error": "Ocurrió un error inesperado. Intenta de nuevo.", "error_type": "UnknownError"}
 
+    def _emit_progress(self, payload: dict) -> None:
+        try:
+            webview.windows[0].evaluate_js(
+                f"window.dispatchEvent(new CustomEvent('download-progress', {{ detail: {json.dumps(payload)} }}))"
+            )
+        except Exception:
+            pass
+
     def download(self, option_index: int, output_directory: str, is_audio: bool = False) -> dict:
         options_list = self._last_audio_options if is_audio else self._last_video_options
 
         if not self._last_url or option_index >= len(options_list):
             return {"success": False, "error": "No hay un video seleccionado válido."}
-        
+
         resolved_dir = Path(output_directory).expanduser().resolve()
         if not resolved_dir.exists():
             return {"success": False, "error": "La carpeta de destino ya no existe. Selecciónala de nuevo."}
-        
+
         selected_option = options_list[option_index]
+        last_emit = {"t": 0.0}
+
+        def on_progress(d: dict) -> None:
+            status = d.get("status")
+
+            if status == "downloading":
+                now = time.time()
+                if now - last_emit["t"] < 0.25:
+                    return
+                last_emit["t"] = now
+
+                downloaded = d.get("downloaded_bytes") or 0
+                total = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
+                percent = round((downloaded / total * 100), 1) if total else 0
+
+                self._emit_progress({
+                    "status": "downloading",
+                    "percent": percent,
+                    "downloaded_mb": round(downloaded / 1_048_576, 2),
+                    "total_mb": round(total / 1_048_576, 2) if total else None,
+                    "speed_mb_s": round((d.get("speed") or 0) / 1_048_576, 2),
+                    "eta_seconds": d.get("eta"),
+                })
+
+            elif status == "finished":
+                self._emit_progress({"status": "processing"})
 
         try:
             request = DownloadRequest(url=self._last_url, output_directory=resolved_dir, options=selected_option)
-            filename = self.controller.download(request)
+            filename = self.controller.download(request, progress_callback=on_progress)
 
             extension = _AUDIO_EXTENSIONS.get(selected_option.audio_codec, "mp3") if is_audio else "mp4"
 
@@ -133,10 +169,14 @@ class API:
                 "audio_codec": selected_option.audio_codec,
             })
 
+            self._emit_progress({"status": "completed"})
             return {"success": True}
+
         except VideoDownloadError as e:
+            self._emit_progress({"status": "error"})
             return {"success": False, "error": str(e), "error_type": type(e).__name__}
         except Exception:
+            self._emit_progress({"status": "error"})
             return {"success": False, "error": "Ocurrió un error inesperado durante la descarga.", "error_type": "UnknownError"}
 
     # FUNCIONALIDADES DE SELECCIÓN, VERIFICACIÓN, CREACIÓN Y APERTURA DE CARPETAS
