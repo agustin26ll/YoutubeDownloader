@@ -40,7 +40,7 @@ export class DownloadOptionsPanel extends LitElement {
                 </p>
                 <div class="options ${this.disabled ? "disabled" : ""}">
                     ${this.options.map(
-            (option, index) => html`
+                        (option, index) => html`
                             <button
                                 class="option ${this.selectedIndex === index ? "selected" : ""}"
                                 ?disabled=${this.disabled}
@@ -49,7 +49,7 @@ export class DownloadOptionsPanel extends LitElement {
                                 ${option.label}
                             </button>
                         `
-        )}
+                    )}
                 </div>
             </div>
         `;

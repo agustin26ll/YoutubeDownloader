@@ -13,9 +13,6 @@ _AUDIO_FORMATS = [
 class DownloadOptionBuilder:
     """Construye DownloadOption a partir de VideoFormat ya seleccionados."""
 
-    def build_options(self, video_formats: list[VideoFormat], best_audio: VideoFormat | None) -> list[DownloadOption]:
-        return [self._build_option(fmt, best_audio) for fmt in video_formats]
-    
     def _build_option(self, video_format: VideoFormat, audio_format: VideoFormat | None) -> DownloadOption:
         codec = video_codec_name(video_format.video_codec).upper()
         extension = video_format.extension.upper()
@@ -33,11 +30,14 @@ class DownloadOptionBuilder:
             audio_format=audio_format,
             is_audio=False
         )
-
+    
+    def build_options(self, video_formats: list[VideoFormat], best_audio: VideoFormat | None) -> list[DownloadOption]:
+        return [self._build_option(fmt, best_audio) for fmt in video_formats]
+    
     def build_audio_options(self, best_audio: VideoFormat | None) -> list[DownloadOption]:
         if not best_audio:
             return []
-
+        
         return [
             DownloadOption(
                 label=label,
@@ -49,3 +49,4 @@ class DownloadOptionBuilder:
             )
             for codec, label in _AUDIO_FORMATS
         ]
+    
