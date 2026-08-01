@@ -13,6 +13,7 @@ export class SettingsTabQuality extends LitElement {
 
     async _handleChange(e) {
         await updateAutoMaxQuality(e.detail.value);
+        window.dispatchEvent(new CustomEvent("settings-updated"));
     }
 
     render() {

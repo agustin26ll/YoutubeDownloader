@@ -75,6 +75,7 @@ export class HomeView extends LitElement {
         this.folderMode = settings.folder_mode;
         this.customDirectory = settings.custom_directory;
         this.autoMaxQuality = settings.auto_max_quality;
+        this._applyQualityDefault();
         await this._refreshDefaultDirectory();
     }
 
@@ -107,7 +108,7 @@ export class HomeView extends LitElement {
         this.videoOptions = result.video_options;
         this.audioOptions = result.audio_options;
         this.mode = "video";
-        this.selectedIndex = this.autoMaxQuality ? this.videoOptions.length - 1 : 0;
+        this._applyQualityDefault();
     };
 
     _handleOptionSelected = (e) => {
@@ -120,9 +121,14 @@ export class HomeView extends LitElement {
 
     _handleModeChanged = async (e) => {
         this.mode = e.detail.mode;
-        this.selectedIndex = this.autoMaxQuality && this.mode === "video" ? this.videoOptions.length - 1 : 0;
+        this._applyQualityDefault();
         await this._refreshDefaultDirectory();
     };
+
+    _applyQualityDefault() {
+        if (this.mode !== "video" || !this.videoOptions.length) return;
+        this.selectedIndex = this.autoMaxQuality ? this.videoOptions.length - 1 : 0;
+    }
 
     get _currentOptions() {
         return this.mode === "audio" ? this.audioOptions : this.videoOptions;
