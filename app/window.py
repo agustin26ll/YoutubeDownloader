@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from dataclasses import asdict
 import webview
+import subprocess
 
 from app.config.env import IS_DEV, VITE_DEV_URL
 from app.controllers.download_controller import DownloadController
@@ -101,27 +102,29 @@ class API:
 
     def download(self, option_index: int, output_directory: str, is_audio: bool = False) -> dict:
         options_list = self._last_audio_options if is_audio else self._last_video_options
-    
+
         if not self._last_url or option_index >= len(options_list):
             return {"success": False, "error": "No hay un video seleccionado válido."}
-    
+        
         resolved_dir = Path(output_directory).expanduser().resolve()
         if not resolved_dir.exists():
             return {"success": False, "error": "La carpeta de destino ya no existe. Selecciónala de nuevo."}
-    
+        
         selected_option = options_list[option_index]
-    
+
         try:
             request = DownloadRequest(url=self._last_url, output_directory=resolved_dir, options=selected_option)
             filename = self.controller.download(request)
-    
+
             extension = _AUDIO_EXTENSIONS.get(selected_option.audio_codec, "mp3") if is_audio else "mp4"
-    
+
             self.history_service.add({
                 "url": self._last_url,
                 "title": self._last_video.title if self._last_video else filename,
                 "uploader": self._last_video.uploader if self._last_video else "",
                 "thumbnail": self._last_video.thumbnail if self._last_video else "",
+                "duration_seconds": self._last_video.duration_seconds if self._last_video else 0,
+                "quality_label": selected_option.label,
                 "output_directory": str(resolved_dir),
                 "filename": filename,
                 "extension": extension,
@@ -129,7 +132,7 @@ class API:
                 "format_string": selected_option.format_string,
                 "audio_codec": selected_option.audio_codec,
             })
-    
+
             return {"success": True}
         except VideoDownloadError as e:
             return {"success": False, "error": str(e), "error_type": type(e).__name__}
@@ -173,19 +176,50 @@ class API:
         entries = self.history_service.load()
         return {"entries": [asdict(e) for e in entries]}
 
-    def open_history_item(self, entry_id: str) -> dict:
+    def check_history_item_exists(self, entry_id: str) -> dict:
+        entry = self.history_service.get_by_id(entry_id)
+        if not entry:
+            return {"exists": False}
+        
+        file_path = Path(entry.output_directory) / f"{entry.filename}.{entry.extension}"
+
+        return {"exists": file_path.exists()}
+    
+    def open_history_file(self, entry_id: str) -> dict:
         entry = self.history_service.get_by_id(entry_id)
         if not entry:
             return {"success": False, "error": "No se encontró el elemento."}
 
         file_path = Path(entry.output_directory) / f"{entry.filename}.{entry.extension}"
+        if not file_path.exists():
+            return {"success": False, "missing": True, "error": "El archivo ya no existe."}
+        
         try:
-            target = file_path if file_path.exists() else Path(entry.output_directory)
-            os.startfile(str(target))
+            os.startfile(str(file_path))
             return {"success": True}
         except Exception:
-            return {"success": False, "error": "No se pudo abrir el archivo o carpeta."}
+            return {"success": False, "error": "No se pudo abrir el archivo."}
+        
+    def open_history_folder(self, entry_id: str) -> dict:
+        entry = self.history_service.get_by_id(entry_id)
+        if not entry:
+            return {"success": False, "error": "No se encontró el elemento."}
+        
+        folder = Path(entry.output_directory)
+        if not folder.exists():
+            return {"success": False, "error": "La carpeta ya no existe."}
+        
+        file_path = folder / f"{entry.filename}.{entry.extension}"
 
+        try:
+            if file_path.exists():
+                subprocess.run(["explorer", "/select,", str(file_path)])
+            else:
+                os.startfile(str(folder))
+            return {"success": True}
+        except Exception:
+            return {"success": False, "error": "No se pudo abrir la carpeta."}
+        
     def redownload_from_history(self, entry_id: str) -> dict:
         entry = self.history_service.get_by_id(entry_id)
         if not entry:

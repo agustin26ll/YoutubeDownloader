@@ -58,8 +58,16 @@ export async function getHistory() {
     return await window.pywebview.api.get_history();
 }
 
-export async function openHistoryItem(id) {
-    return await window.pywebview.api.open_history_item(id);
+export async function checkHistoryItemExists(id) {
+    return await window.pywebview.api.check_history_item_exists(id);
+}
+
+export async function openHistoryFile(id) {
+    return await window.pywebview.api.open_history_file(id);
+}
+
+export async function openHistoryFolder(id) {
+    return await window.pywebview.api.open_history_folder(id);
 }
 
 export async function redownloadFromHistory(id) {

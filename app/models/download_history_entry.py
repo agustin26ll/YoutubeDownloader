@@ -7,6 +7,8 @@ class DownloadHistoryEntry:
     title: str
     uploader: str
     thumbnail: str
+    duration_seconds: int
+    quality_label: str
     output_directory: str
     filename: str
     extension: str

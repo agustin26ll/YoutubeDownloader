@@ -1,6 +1,7 @@
 import { LitElement, html, css } from "lit";
 import styles from "/src/styles/components/video-preview-card.css?inline";
 import { extractYoutubeId } from "../utils/youtube.js";
+import { formatDuration } from "../utils/duration.js";
 
 export class VideoPreviewCard extends LitElement {
     static properties = {
@@ -13,12 +14,6 @@ export class VideoPreviewCard extends LitElement {
     constructor() {
         super();
         this.playing = false;
-    }
-
-    _formatDuration(seconds) {
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        return `${m}:${s.toString().padStart(2, "0")}`;
     }
 
     _handlePlay() {
@@ -50,7 +45,7 @@ export class VideoPreviewCard extends LitElement {
                 <div class="info">
                     <h3>${this.video.title}</h3>
                     <p class="uploader">${this.video.uploader}</p>
-                    <p class="duration">${this._formatDuration(this.video.duration_seconds)}</p>
+                    <p class="duration">${formatDuration(this.video.duration_seconds)}</p>
                 </div>
             </div>
         `;
