@@ -46,6 +46,7 @@ export class AppRoot extends LitElement {
     _renderView() {
         switch (this.currentView) {
             case "home": return html`<home-view></home-view>`;
+            case "history": return html`<history-view></history-view>`;
             case "donate": return html`<donate-view></donate-view>`;
             case "help": return html`<help-view></help-view>`;
             default: return html`<home-view></home-view>`;
