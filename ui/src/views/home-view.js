@@ -58,7 +58,7 @@ export class HomeView extends LitElement {
         this.addEventListener("folder-changed", this._handleFolderChanged);
         this.addEventListener("mode-changed", this._handleModeChanged);
         window.addEventListener("settings-updated", this._handleSettingsUpdated);
-        
+
         this._loadSettings();
     }
 
@@ -160,14 +160,16 @@ export class HomeView extends LitElement {
 
         const result = await downloadVideo(this.selectedIndex, this._outputDirectory, this.mode === "audio");
 
-        this.downloading = false;
-
         if (!result.success) {
+            this.downloading = false;
             this.error = result.error;
             return;
         }
 
-        this.downloadSuccess = true;
+        setTimeout(() => {
+            this.downloading = false;
+            this.downloadSuccess = true;
+        }, 700);
     };
 
     render() {
