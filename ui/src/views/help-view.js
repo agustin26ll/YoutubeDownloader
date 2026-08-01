@@ -1,5 +1,5 @@
 import { LitElement, html, css } from "lit";
-import styles from "../styles/views/settings-view.css?inline";
+import styles from "../styles/views/help-view.css?inline";
 
 export class HelpView extends LitElement {
     static styles = css([styles]);

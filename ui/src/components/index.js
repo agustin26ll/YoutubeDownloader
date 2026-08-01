@@ -5,3 +5,8 @@ export { DownloadOptionsPanel } from "./download-options-panel.js";
 export { FolderPicker } from "./folder-picker.js";
 export { FormatToggle } from "./format-toggle.js";
 export { ConnectionToast } from "./connection-toast.js";
+export { SettingsTabNaming } from "./settings-tab-naming.js";
+export { AdvancedSettingsModal } from "./advanced-settings-modal.js";
+export { SettingsToggleOption } from "./settings-toggle-option.js";
+export { SettingsTabFolder } from "./settings-tab-folder.js";
+export { SettingsTabQuality } from "./settings-tab-quality.js";

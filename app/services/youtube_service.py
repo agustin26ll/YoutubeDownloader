@@ -46,6 +46,44 @@ class YoutubeService:
         self.builder = builder or DownloadOptionBuilder()
         self.settings_service = settings_service or SettingsService()
         self.filename_formatter = filename_formatter or FilenameFormatter()
+
+    def _extract_info(self, url:str) -> dict:
+        try:
+            with yt_dlp.YoutubeDL({"quiet": True}) as ydl:
+                return ydl.extract_info(url, download=False)
+        except yt_dlp.utils.DownloadError as e:
+            message = str(e).lower()
+            if any(marker in message for marker in _UNAVAILABLE_MARKERS):
+                raise VideoUnavailableError(
+                        "Este video no está disponible en tu región, es privado o tiene restricción de edad. "
+                    "Si usas VPN, verifica que esté activa e intenta de nuevo."
+                ) from e
+            raise VideoNotFoundError("No se pudo obtener información del video. Verifica la URL.") from e
+            
+    def _build_download_options(self, request: DownloadRequest, settings: Settings, filename: str) -> dict:
+        base = {
+            "ffmpeg_location": str(settings.ffmpeg_path),
+            "outtmpl": str(request.output_directory / f"{filename}.%(ext)s"),
+            "noplaylist": True,
+            "socket_timeout": 15,
+        }
+    
+        if request.options.is_audio:
+            base.update({
+                "format": "bestaudio/best",
+                "postprocessors": [{
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": request.options.audio_codec,
+                    "preferredquality": "192",
+                }],
+            })
+        else:
+            base.update({
+                "format": request.options.format_string,
+                "merge_output_format": "mp4",
+            })
+    
+        return base
     
     def get_video(self, url: str) -> Video:
         if not is_youtube_url(url):
@@ -95,41 +133,4 @@ class YoutubeService:
         except yt_dlp.utils.DownloadError as e:
             raise DownloadFailedError(str(e)) from e
 
-    def _extract_info(self, url:str) -> dict:
-        try:
-            with yt_dlp.YoutubeDL({"quiet": True}) as ydl:
-                return ydl.extract_info(url, download=False)
-        except yt_dlp.utils.DownloadError as e:
-            message = str(e).lower()
-            if any(marker in message for marker in _UNAVAILABLE_MARKERS):
-                raise VideoUnavailableError(
-                     "Este video no está disponible en tu región, es privado o tiene restricción de edad. "
-                    "Si usas VPN, verifica que esté activa e intenta de nuevo."
-                ) from e
-            raise VideoNotFoundError("No se pudo obtener información del video. Verifica la URL.") from e
-        
-    def _build_download_options(self, request: DownloadRequest, settings: Settings, filename: str) -> dict:
-        base = {
-            "ffmpeg_location": str(settings.ffmpeg_path),
-            "outtmpl": str(request.output_directory / f"{filename}.%(ext)s"),
-            "noplaylist": True,
-            "socket_timeout": 15,
-        }
-
-        if request.options.is_audio:
-            base.update({
-                "format": "bestaudio/best",
-                "postprocessors": [{
-                    "key": "FFmpegExtractAudio",
-                    "preferredcodec": "mp3",
-                    "preferredquality": "192",
-                }],
-            })
-        else:
-            base.update({
-                "format": request.options.format_string,
-                "merge_output_format": "mp4",
-            })
-
-        return base
-        
+        return filename        

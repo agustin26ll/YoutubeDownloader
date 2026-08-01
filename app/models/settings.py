@@ -8,3 +8,5 @@ class Settings:
     default_quality: str  # "best" | "1080" | "720" | "480" | "audio_only"
     ffmpeg_path: Path
     naming_expression: str = "{artist} - {title:title}"
+    folder_mode: str = "default"
+    auto_max_quality: bool = False

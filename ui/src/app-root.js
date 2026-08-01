@@ -36,13 +36,17 @@ export class AppRoot extends LitElement {
     }
 
     _handleNavigate = (e) => {
+        if (e.detail.itemId === "settings") {
+            this.renderRoot.querySelector("advanced-settings-modal")?.show();
+            return;
+        }
         this.currentView = e.detail.itemId;
     };
 
     _renderView() {
         switch (this.currentView) {
             case "home": return html`<home-view></home-view>`;
-            case "settings": return html`<settings-view></settings-view>`;
+            case "history": return html`<history-view></history-view>`;
             case "donate": return html`<donate-view></donate-view>`;
             case "help": return html`<help-view></help-view>`;
             default: return html`<home-view></home-view>`;
@@ -54,6 +58,7 @@ export class AppRoot extends LitElement {
             <sidebar-menu></sidebar-menu>
             <div class="content">${this._renderView()}</div>
             <connection-toast></connection-toast>
+            <advanced-settings-modal></advanced-settings-modal>
         `;
     }
 }

@@ -16,10 +16,28 @@ class SettingsService:
         default_quality="best",
         ffmpeg_path=_PROJECT_ROOT / "tools" / "ffmpeg",
         naming_expression="{artist} - {title:title}",
+        folder_mode="default",
+        auto_max_quality=False,
     )
 
     def __init__(self):
         self.CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    def save(self, settings: Settings) -> None:
+        self._validate(settings)
+    
+        data = {
+        "download_directory": str(settings.download_directory),
+        "default_quality": settings.default_quality,
+        "ffmpeg_path": str(settings.ffmpeg_path),
+        "naming_expression": settings.naming_expression,
+        "folder_mode": settings.folder_mode,
+            "auto_max_quality": settings.auto_max_quality,
+        }
+    
+        self.CONFIG_FILE.write_text(
+            json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
 
     def load(self) -> Settings:
         if not self.CONFIG_FILE.exists():
@@ -34,25 +52,19 @@ class SettingsService:
                 default_quality=raw["default_quality"],
                 ffmpeg_path=Path(raw["ffmpeg_path"]),
                 naming_expression=raw.get("naming_expression", "{artist} - {title:title}"),
+                folder_mode=raw.get("folder_mode", "default"),
+                auto_max_quality=raw.get("auto_max_quality", False),
             )
         
         except (json.JSONDecodeError, KeyError, TypeError):
             self.save(self._DEFAULTS)
             return self._DEFAULTS
-        
-    def save(self, settings: Settings) -> None:
-        self._validate(settings)
 
-        data = {
-            "download_directory": str(settings.download_directory),
-            "default_quality": settings.default_quality,
-            "ffmpeg_path": str(settings.ffmpeg_path),
-            "naming_expression": settings.naming_expression,
-        }
-
-        self.CONFIG_FILE.write_text(
-            json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
-        )
+    def update_naming_expression(self, expression: str) -> Settings:
+        settings = self.load()
+        settings.naming_expression = expression.strip() or "{artist} - {title:title}"
+        self.save(settings)
+        return settings
 
     def update_download_directory(self, new_path: Path) -> Settings:
         settings = self.load()
@@ -63,6 +75,21 @@ class SettingsService:
     def update_default_quality(self, quality: str) -> Settings:
         settings = self.load()
         settings.default_quality = quality
+        self.save(settings)
+        return settings
+
+    def update_folder_mode(self, mode: str) -> Settings:
+        if mode not in ("default", "manual"):
+            raise ValueError(f"Modo de carpeta inválido: {mode}")
+
+        settings = self.load()
+        settings.folder_mode = mode
+        self.save(settings)
+        return settings
+
+    def update_auto_max_quality(self, value: bool) -> Settings:
+        settings = self.load()
+        settings.auto_max_quality = value
         self.save(settings)
         return settings
 

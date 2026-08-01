@@ -1,0 +1,126 @@
+:host {
+    display: block;
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+h1 {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: var(--space-lg);
+}
+
+.hint {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+}
+
+.item img {
+    width: 104px;
+    height: 58px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.title {
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: 20px;
+    flex-shrink: 0;
+    animation: badge-appear 250ms ease;
+}
+
+.badge-missing {
+    background: #FFF0EE;
+    color: #D70015;
+}
+
+.badge-found {
+    background: #EAF7ED;
+    color: #1A7A2E;
+}
+
+@keyframes badge-appear {
+    from {
+        opacity: 0;
+        transform: translateY(-2px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.tags-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.tag {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    background: var(--color-bg);
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+.tag-quality {
+    color: var(--color-accent);
+    background: rgba(0, 113, 227, 0.08);
+    font-weight: 500;
+}
+
+.date {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+}
+
+.actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
