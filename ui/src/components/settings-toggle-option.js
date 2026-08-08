@@ -19,6 +19,7 @@ export class SettingsToggleOption extends LitElement {
         super();
         this.value = false;
         this.saved = false;
+        this._groupName = `toggle-${Math.random().toString(36).slice(2)}`;
     }
 
     _select(newValue) {
@@ -39,14 +40,14 @@ export class SettingsToggleOption extends LitElement {
         return html`
             <div class="options">
                 <label class="option ${!this.value ? "selected" : ""}">
-                    <input type="radio" ?checked=${!this.value} @change=${() => this._select(false)} />
+                    <input type="radio" name=${this._groupName} ?checked=${!this.value} @change=${() => this._select(false)} />
                     <div>
                         <p class="option-title">${this.optionOffLabel}</p>
                         <p class="option-desc">${this.optionOffDesc}</p>
                     </div>
                 </label>
                 <label class="option ${this.value ? "selected" : ""}">
-                    <input type="radio" ?checked=${this.value} @change=${() => this._select(true)} />
+                    <input type="radio" name=${this._groupName} ?checked=${this.value} @change=${() => this._select(true)} />
                     <div>
                         <p class="option-title">${this.optionOnLabel}</p>
                         <p class="option-desc">${this.optionOnDesc}</p>
