@@ -5,6 +5,7 @@ import "./views/index.js";
 export class AppRoot extends LitElement {
     static properties = {
         currentView: { type: String, state: true },
+        visitedViews: { type: Object, state: true },
     };
 
     static styles = css`
@@ -18,11 +19,16 @@ export class AppRoot extends LitElement {
             overflow: auto;
             padding: var(--space-lg);
         }
+
+        .view-hidden {
+            display: none;
+        }
     `;
 
     constructor() {
         super();
         this.currentView = "home";
+        this.visitedViews = new Set(["home"]);
     }
 
     connectedCallback() {
@@ -36,27 +42,36 @@ export class AppRoot extends LitElement {
     }
 
     _handleNavigate = (e) => {
-        if (e.detail.itemId === "settings") {
+        const id = e.detail.itemId;
+
+        if (id === "settings") {
             this.renderRoot.querySelector("advanced-settings-modal")?.show();
             return;
         }
-        this.currentView = e.detail.itemId;
+
+        if (!this.visitedViews.has(id)) {
+            this.visitedViews = new Set(this.visitedViews).add(id);
+        }
+        this.currentView = id;
+
+        this.updateComplete.then(() => {
+            this.renderRoot.querySelector(`${id}-view`)?.dispatchEvent(new CustomEvent("view-activated"));
+        });
     };
 
-    _renderView() {
-        switch (this.currentView) {
-            case "home": return html`<home-view></home-view>`;
-            case "history": return html`<history-view></history-view>`;
-            case "donate": return html`<donate-view></donate-view>`;
-            case "help": return html`<help-view></help-view>`;
-            default: return html`<home-view></home-view>`;
-        }
+    _hiddenClass(id) {
+        return this.currentView === id ? "" : "view-hidden";
     }
 
     render() {
         return html`
             <sidebar-menu></sidebar-menu>
-            <div class="content">${this._renderView()}</div>
+            <div class="content">
+                ${this.visitedViews.has("home") ? html`<home-view class=${this._hiddenClass("home")}></home-view>` : ""}
+                ${this.visitedViews.has("history") ? html`<history-view class=${this._hiddenClass("history")}></history-view>` : ""}
+                ${this.visitedViews.has("donate") ? html`<donate-view class=${this._hiddenClass("donate")}></donate-view>` : ""}
+                ${this.visitedViews.has("help") ? html`<help-view class=${this._hiddenClass("help")}></help-view>` : ""}
+            </div>
             <connection-toast></connection-toast>
             <advanced-settings-modal></advanced-settings-modal>
         `;

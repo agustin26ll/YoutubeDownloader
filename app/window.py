@@ -302,6 +302,14 @@ class API:
 
         return self.download(matching_index, str(resolved_dir), entry.is_audio)
 
+    def delete_history_item(self, entry_id: str) -> dict:
+        self.history_service.delete(entry_id)
+        return {"success": True}
+
+    def clear_history(self) -> dict:
+        self.history_service.clear_all()
+        return { "success": True }
+
 def launch_app():
     youtube_service = YoutubeService()
     settings_service = SettingsService()

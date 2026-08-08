@@ -15,6 +15,7 @@ import {
     downloadVideo,
     previewFilename
 } from "../services/api-bridge.js";
+import { pywebviewReady } from "../services/bridge-ready.js";
 
 const SUCCESS_DISPLAY_DELAY_MS = 700;
 
@@ -100,6 +101,7 @@ export class HomeView extends LitElement {
     // Carga de configuración inicial
 
     async _loadSettings() {
+        await pywebviewReady();
         const settings = await getSettings();
         this.folderMode = settings.folder_mode;
         this.customDirectory = settings.custom_directory;

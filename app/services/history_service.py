@@ -17,6 +17,10 @@ class HistoryService:
     def __init__(self):
         self.HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
 
+    def _save(self, entries: list[DownloadHistoryEntry]) -> None:
+        data = [asdict(entry) for entry in entries]
+        self.HISTORY_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+
     def load(self) -> list[DownloadHistoryEntry]:
         if not self.HISTORY_FILE.exists():
             return []
@@ -39,7 +43,10 @@ class HistoryService:
 
     def get_by_id(self, entry_id: str) -> DownloadHistoryEntry | None:
         return next((e for e in self.load() if e.id == entry_id), None)
+    
+    def delete(self, entry_id: str) -> None:
+        entries = [e for e in self.load() if e.id != entry_id]
+        self._save(entries)
 
-    def _save(self, entries: list[DownloadHistoryEntry]) -> None:
-        data = [asdict(entry) for entry in entries]
-        self.HISTORY_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    def clear_all(self) -> None:
+        self._save([])

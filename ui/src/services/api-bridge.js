@@ -73,3 +73,11 @@ export async function openHistoryFolder(id) {
 export async function redownloadFromHistory(id) {
     return await window.pywebview.api.redownload_from_history(id);
 }
+
+export async function deleteHistoryItem(id) {
+    return await window.pywebview.api.delete_history_item(id);
+}
+
+export async function clearHistory() {
+    return await window.pywebview.api.clear_history();
+}
