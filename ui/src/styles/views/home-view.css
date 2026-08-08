@@ -52,3 +52,12 @@
     padding: var(--space-sm) var(--space-md);
     border-radius: var(--radius);
 }
+
+.subfolder-hint {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    background: var(--color-bg);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius);
+    word-break: break-all;
+}

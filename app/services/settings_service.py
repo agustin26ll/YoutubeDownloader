@@ -18,6 +18,7 @@ class SettingsService:
         naming_expression="{artist} - {title:title}",
         folder_mode="default",
         auto_max_quality=False,
+        create_subfolder=False
     )
 
     def __init__(self):
@@ -32,7 +33,8 @@ class SettingsService:
         "ffmpeg_path": str(settings.ffmpeg_path),
         "naming_expression": settings.naming_expression,
         "folder_mode": settings.folder_mode,
-            "auto_max_quality": settings.auto_max_quality,
+        "auto_max_quality": settings.auto_max_quality,
+        "create_subfolder": settings.create_subfolder,
         }
     
         self.CONFIG_FILE.write_text(
@@ -54,6 +56,7 @@ class SettingsService:
                 naming_expression=raw.get("naming_expression", "{artist} - {title:title}"),
                 folder_mode=raw.get("folder_mode", "default"),
                 auto_max_quality=raw.get("auto_max_quality", False),
+                create_subfolder=raw.get("create_subfolder", False),
             )
         
         except (json.JSONDecodeError, KeyError, TypeError):
@@ -84,6 +87,12 @@ class SettingsService:
 
         settings = self.load()
         settings.folder_mode = mode
+        self.save(settings)
+        return settings
+
+    def update_create_subfolder(self, value: bool) -> Settings:
+        settings = self.load()
+        settings.create_subfolder = value
         self.save(settings)
         return settings
 

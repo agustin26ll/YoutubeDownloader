@@ -18,6 +18,7 @@ export class AdvancedSettingsModal extends LitElement {
         namingExpression: { type: String, state: true },
         folderMode: { type: String, state: true },
         autoMaxQuality: { type: Boolean, state: true },
+        createSubfolder: { type: Boolean, state: true },
     };
 
     static styles = css([styles]);
@@ -50,6 +51,7 @@ export class AdvancedSettingsModal extends LitElement {
         this.folderMode = settings.folder_mode;
         this.autoMaxQuality = settings.auto_max_quality;
         this.open = true;
+        this.createSubfolder = settings.create_subfolder;
     }
 
     close() {
@@ -68,6 +70,8 @@ export class AdvancedSettingsModal extends LitElement {
                 return html`<settings-tab-folder .folderMode=${this.folderMode}></settings-tab-folder>`;
             case "quality":
                 return html`<settings-tab-quality .autoMaxQuality=${this.autoMaxQuality}></settings-tab-quality>`;
+            case "folder":
+                return html`<settings-tab-folder .folderMode=${this.folderMode} .createSubfolder=${this.createSubfolder}></settings-tab-folder>`;
         }
     }
 

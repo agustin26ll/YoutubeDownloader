@@ -13,7 +13,8 @@ import {
     getSettings,
     getDefaultDirectory,
     downloadVideo,
-    previewFilename
+    previewFilename,
+    previewSubfolder
 } from "../services/api-bridge.js";
 import { pywebviewReady } from "../services/bridge-ready.js";
 
@@ -35,6 +36,7 @@ export class HomeView extends LitElement {
         defaultDirectory: { type: String, state: true },
         autoMaxQuality: { type: Boolean, state: true },
         customFilename: { type: String, state: true },
+        subfolderPreview: { type: String, state: true },
     };
 
     static styles = css([styles]);
@@ -56,6 +58,7 @@ export class HomeView extends LitElement {
         this.autoMaxQuality = false;
         this._handleSettingsUpdated = this._handleSettingsUpdated.bind(this);
         this.customFilename = "";
+        this.subfolderPreview = null;
     }
 
     async connectedCallback() {
@@ -85,7 +88,7 @@ export class HomeView extends LitElement {
     // Handler de actualización de configuración, para actualizar el estado de la vista cuando se cambian las configuraciones globales.
 
     async _handleSettingsUpdated(e) {
-        const { folder_mode, auto_max_quality } = e.detail;
+        const { folder_mode, auto_max_quality, create_subfolder } = e.detail;
 
         if (folder_mode !== undefined) {
             this.folderMode = folder_mode;
@@ -95,6 +98,10 @@ export class HomeView extends LitElement {
         if (auto_max_quality !== undefined) {
             this.autoMaxQuality = auto_max_quality;
             this._applyQualityDefault();
+        }
+
+        if (create_subfolder !== undefined) {
+            await this._refreshSubfolderPreview();
         }
     }
 
@@ -116,6 +123,15 @@ export class HomeView extends LitElement {
         if (this.folderMode !== "default") return;
         const result = await getDefaultDirectory(this.mode === "audio");
         this.defaultDirectory = result.path;
+    }
+
+    async _refreshSubfolderPreview() {
+        if (!this.video) {
+            this.subfolderPreview = null;
+            return;
+        }
+        const result = await previewSubfolder();
+        this.subfolderPreview = result.enabled ? result.name : null;
     }
 
     // Handler de búsqueda de video, que se activa cuando el usuario ingresa una URL y presiona Enter.
@@ -143,6 +159,7 @@ export class HomeView extends LitElement {
 
         const preview = await previewFilename(null);
         this.customFilename = preview.filename;
+        await this._refreshSubfolderPreview();
     };
 
     _handleOptionSelected = (e) => {
@@ -169,11 +186,11 @@ export class HomeView extends LitElement {
         this.downloadSuccess = false;
 
         const result = await downloadVideo(
-                            this.selectedIndex,
-                            this._outputDirectory,
-                            this.mode === "audio",
-                            this.customFilename.trim()
-                        );
+            this.selectedIndex,
+            this._outputDirectory,
+            this.mode === "audio",
+            this.customFilename.trim()
+        );
 
         if (!result.success) {
             this.downloading = false;
@@ -202,45 +219,50 @@ export class HomeView extends LitElement {
 
     render() {
         return html`
-            <url-search-bar .loading=${this.loading}></url-search-bar>
+        <url-search-bar .loading=${this.loading}></url-search-bar>
 
-            ${this.video
+        ${this.video
                 ? html`
-                      <video-preview-card .video=${this.video}></video-preview-card>
-                      <format-toggle .mode=${this.mode}></format-toggle>
+                  <video-preview-card .video=${this.video}></video-preview-card>
+                  <format-toggle .mode=${this.mode}></format-toggle>
 
-                      ${html`<download-options-panel
-                                .options=${this._currentOptions}
-                                .selectedIndex=${this.selectedIndex}
-                                .disabled=${this.autoMaxQuality && this.mode === "video"}
-                            ></download-options-panel>`}
+                  <download-options-panel
+                      .options=${this._currentOptions}
+                      .selectedIndex=${this.selectedIndex}
+                      .disabled=${this.autoMaxQuality && this.mode === "video"}
+                  ></download-options-panel>
 
-                      <filename-input .value=${this.customFilename}
-                            placeholder="Nombre automático">
-                        </filename-input>  
+                  <filename-input
+                      .value=${this.customFilename}
+                      placeholder="Nombre automático"
+                  ></filename-input>
 
-                      <folder-picker
-                          .path=${this._outputDirectory}
-                          .editable=${this.folderMode === "manual"}
-                      ></folder-picker>
+                  ${this.subfolderPreview
+                        ? html`<p class="subfolder-hint">📁 Se guardará en: ${this._outputDirectory}/${this.subfolderPreview}/</p>`
+                        : ""}
 
-                      ${this.downloading || this.downloadSuccess
+                  <folder-picker
+                      .path=${this._outputDirectory}
+                      .editable=${this.folderMode === "manual"}
+                  ></folder-picker>
+
+                  ${this.downloading || this.downloadSuccess
                         ? html`<download-progress-bar .active=${this.downloading}></download-progress-bar>`
                         : ""}
 
-                      ${this.error ? html`<p class="error">${this.error}</p>` : ""}
-                      ${this.downloadSuccess ? html`<p class="success">Descarga completada.</p>` : ""}
+                  ${this.error ? html`<p class="error">${this.error}</p>` : ""}
+                  ${this.downloadSuccess ? html`<p class="success">Descarga completada.</p>` : ""}
 
-                      <button
-                        class="download-btn"
-                        @click=${this._handleDownload}
-                        ?disabled=${this.downloading || !this._currentOptions.length}
-                    >
-                        ${this.downloading ? "Descargando..." : "Descargar"}
-                      </button>
-                  `
+                  <button
+                      class="download-btn"
+                      @click=${this._handleDownload}
+                      ?disabled=${this.downloading || !this._currentOptions.length}
+                  >
+                      ${this.downloading ? "Descargando..." : "Descargar"}
+                  </button>
+              `
                 : ""}
-        `;
+    `;
     }
 }
 

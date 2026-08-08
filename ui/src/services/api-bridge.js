@@ -28,6 +28,14 @@ export async function updateAutoMaxQuality(value) {
 
 // CARPETAS
 
+export async function updateCreateSubfolder(value) {
+    return await window.pywebview.api.update_create_subfolder(value);
+}
+
+export async function previewSubfolder() {
+    return await window.pywebview.api.preview_subfolder();
+}
+
 export async function updateFolderMode(mode) {
     return await window.pywebview.api.update_folder_mode(mode);
 }

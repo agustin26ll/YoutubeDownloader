@@ -2,6 +2,7 @@ from app.models.video import Video
 from app.models.download_option import DownloadOption
 from app.models.download_request import DownloadRequest
 from app.services.youtube_service import YoutubeService
+from pathlib import Path
 
 class DownloadController:
     def __init__(self, youtube_service: YoutubeService):
@@ -17,5 +18,5 @@ class DownloadController:
     def get_audio_options(self, video: Video) -> list[DownloadOption]:
         return self.youtube_service.get_audio_options(video)
     
-    def download(self, request: DownloadRequest, progress_callback=None, custom_filename: str | None = None) -> str:
+    def download(self, request: DownloadRequest, progress_callback=None, custom_filename: str | None = None) -> tuple[str, Path]:
         return self.youtube_service.download(request, progress_callback, custom_filename)

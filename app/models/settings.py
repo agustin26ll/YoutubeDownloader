@@ -10,3 +10,4 @@ class Settings:
     naming_expression: str = "{artist} - {title:title}"
     folder_mode: str = "default"
     auto_max_quality: bool = False
+    create_subfolder: bool = False

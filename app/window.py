@@ -59,6 +59,7 @@ class API:
             "default_quality": settings.default_quality,
             "naming_expression": settings.naming_expression,
             "auto_max_quality": settings.auto_max_quality,
+            "create_subfolder": settings.create_subfolder,
         }
 
     def get_default_directory(self, is_audio: bool) -> dict:
@@ -72,6 +73,10 @@ class API:
         settings = self.settings_service.update_folder_mode(mode)
         return {"success": True, "folder_mode": settings.folder_mode}
 
+    def update_create_subfolder(self, value: bool) -> dict:
+        settings = self.settings_service.update_create_subfolder(value)
+        return {"success": True, "create_subfolder": settings.create_subfolder}
+
     def update_auto_max_quality(self, value: bool) -> dict:
         settings = self.settings_service.update_auto_max_quality(value)
         return {"success": True, "auto_max_quality": settings.auto_max_quality}
@@ -79,6 +84,16 @@ class API:
     def update_naming_expression(self, expression: str) -> dict:
         settings = self.settings_service.update_naming_expression(expression)
         return {"success": True, "naming_expression": settings.naming_expression}
+
+    def preview_subfolder(self) -> dict:
+        settings = self.settings_service.load()
+        if not settings.create_subfolder:
+            return {"enabled": False, "name": None}
+
+        from app.services.filename_formatter import FilenameFormatter
+        sample = self._last_video or _SAMPLE_VIDEO
+        name = FilenameFormatter().build(sample, settings.naming_expression)
+        return {"enabled": True, "name": name}
 
     def preview_filename(self, expression: str) -> dict:
         from app.services.filename_formatter import FilenameFormatter
@@ -160,6 +175,8 @@ class API:
             request = DownloadRequest(url=self._last_url, output_directory=resolved_dir, options=selected_option)
             filename = self.controller.download(request, progress_callback=on_progress, custom_filename=custom_filename)
 
+            filename, effective_dir = self.controller.download(request, progress_callback=on_progress, custom_filename=custom_filename)
+
             extension = _AUDIO_EXTENSIONS.get(selected_option.audio_codec, "mp3") if is_audio else "mp4"
 
             self.history_service.add({
@@ -169,7 +186,7 @@ class API:
                 "thumbnail": self._last_video.thumbnail if self._last_video else "",
                 "duration_seconds": self._last_video.duration_seconds if self._last_video else 0,
                 "quality_label": selected_option.label,
-                "output_directory": str(resolved_dir),
+                "output_directory": str(effective_dir),
                 "filename": filename,
                 "extension": extension,
                 "is_audio": is_audio,

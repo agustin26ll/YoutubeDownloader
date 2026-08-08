@@ -58,3 +58,31 @@
     text-decoration: underline;
     word-break: break-all;
 }
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: var(--space-lg);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--color-border);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+}
+
+.checkbox-row input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--color-accent);
+    cursor: pointer;
+}
+
+.subfolder-preview {
+    margin-top: var(--space-sm);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    background: var(--color-bg);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius);
+    word-break: break-all;
+}
