@@ -1,6 +1,8 @@
 import { LitElement, html, css } from "lit";
 import styles from "/src/styles/components/settings-toggle-option.css?inline";
 
+const SAVE_CONFIRMATION_DISPLAY_MS = 2000;
+
 export class SettingsToggleOption extends LitElement {
     static properties = {
         value: { type: Boolean },
@@ -30,7 +32,7 @@ export class SettingsToggleOption extends LitElement {
             })
         );
         this.saved = true;
-        setTimeout(() => (this.saved = false), 1500);
+        setTimeout(() => (this.saved = false), SAVE_CONFIRMATION_DISPLAY_MS);
     }
 
     render() {

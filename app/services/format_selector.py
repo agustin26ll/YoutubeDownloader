@@ -2,9 +2,11 @@ from app.models.video_format import VideoFormat
 from app.utils.codec_utils import (
     VIDEO_CODEC_PRIORITY,
     AUDIO_CODEC_PRIORITY,
+    UNKNOWN_CODEC_PRIORITY,
     video_codec_name,
     audio_codec_name
 )
+
 
 class FormatSelector:
     """Filtra, deduplica y selecciona los mejores formatos de video/audio"""
@@ -25,7 +27,7 @@ class FormatSelector:
         
         audio_formats.sort(
             key=lambda fmt:(
-                AUDIO_CODEC_PRIORITY.get(audio_codec_name(fmt.audio_codec), 99),
+                AUDIO_CODEC_PRIORITY.get(audio_codec_name(fmt.audio_codec), UNKNOWN_CODEC_PRIORITY),
                 -(fmt.file_size or 0),
             )
         )
@@ -40,7 +42,7 @@ class FormatSelector:
     
         for fmt in formats:
             codec = video_codec_name(fmt.video_codec)
-            priority = VIDEO_CODEC_PRIORITY.get(codec, 99)
+            priority = VIDEO_CODEC_PRIORITY.get(codec, UNKNOWN_CODEC_PRIORITY)
             current = selected.get(fmt.resolution)
 
             if current is None:

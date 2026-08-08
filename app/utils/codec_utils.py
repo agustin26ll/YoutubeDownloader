@@ -18,6 +18,8 @@ AUDIO_OUTPUT_FORMATS = [
     ("vorbis", "OGG"),
 ]
 
+UNKNOWN_CODEC_PRIORITY = 99
+
 def video_codec_name(codec: str) -> str:
     if codec.startswith("avc1"):
         return "avc1"

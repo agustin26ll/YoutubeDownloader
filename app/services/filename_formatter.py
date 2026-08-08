@@ -7,6 +7,7 @@ _TOKEN_PATTERN = re.compile(r"\{(\w+)(?::(\w+))?\}")
 
 _DEFAULT_EXPRESSION = "{artist} - {title:title}"
 
+_SECONDS_PER_MINUTE = 60
 
 class FilenameFormatter:
 
@@ -52,5 +53,5 @@ class FilenameFormatter:
         return value
 
     def _format_duration(self, seconds: int) -> str:
-        minutes, secs = divmod(seconds, 60)
+        minutes, secs = divmod(seconds, _SECONDS_PER_MINUTE)
         return f"{minutes}:{secs:02d}"

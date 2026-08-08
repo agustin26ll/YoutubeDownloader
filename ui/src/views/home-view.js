@@ -14,6 +14,8 @@ import {
     downloadVideo,
 } from "../services/api-bridge.js";
 
+const SUCCESS_DISPLAY_DELAY_MS = 700;
+
 export class HomeView extends LitElement {
     static properties = {
         loading: { type: Boolean, state: true },
@@ -169,7 +171,7 @@ export class HomeView extends LitElement {
         setTimeout(() => {
             this.downloading = false;
             this.downloadSuccess = true;
-        }, 700);
+        }, SUCCESS_DISPLAY_DELAY_MS);
     };
 
     render() {

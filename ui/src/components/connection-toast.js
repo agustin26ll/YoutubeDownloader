@@ -2,6 +2,8 @@ import { LitElement, html, css } from "lit";
 import styles from "/src/styles/components/connection-toast.css?inline";
 import { startConnectionMonitor } from "../services/connection-monitor.js";
 
+const RECONNECT_TOAST_DISPLAY_MS = 3000;
+
 export class ConnectionToast extends LitElement {
     static properties = {
         visible: { type: Boolean, state: true },
@@ -38,7 +40,7 @@ export class ConnectionToast extends LitElement {
 
         if (wasOffline) {
             this.visible = true;
-            setTimeout(() => (this.visible = false), 3000);
+            setTimeout(() => (this.visible = false), RECONNECT_TOAST_DISPLAY_MS);
         } else {
             this.visible = false;
         }

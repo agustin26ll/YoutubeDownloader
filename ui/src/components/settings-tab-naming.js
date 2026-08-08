@@ -16,6 +16,9 @@ const MODIFIERS = [
     { mod: ":title", desc: "Primera Mayúscula" },
 ];
 
+const PREVIEW_DEBOUNCE_MS = 300;
+const SAVE_CONFIRMATION_DISPLAY_MS = 2000;
+
 export class SettingsTabNaming extends LitElement {
     static properties = {
         expression: { type: String },
@@ -43,7 +46,7 @@ export class SettingsTabNaming extends LitElement {
         this.expression = e.target.value;
         this.saved = false;
         clearTimeout(this._debounceTimer);
-        this._debounceTimer = setTimeout(() => this._updatePreview(), 300);
+        this._debounceTimer = setTimeout(() => this._updatePreview(), PREVIEW_DEBOUNCE_MS);
     }
 
     async _updatePreview() {
@@ -54,7 +57,7 @@ export class SettingsTabNaming extends LitElement {
     async _handleSave() {
         await updateNamingExpression(this.expression);
         this.saved = true;
-        setTimeout(() => (this.saved = false), 2000);
+        setTimeout(() => (this.saved = false), SAVE_CONFIRMATION_DISPLAY_MS);
     }
 
     _insertToken(token) {

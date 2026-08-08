@@ -12,6 +12,10 @@ import {
     redownloadFromHistory,
 } from "../services/api-bridge.js";
 
+const FOUND_BADGE_DISPLAY_MS = 2000;
+const SHAKE_ANIMATION_MS = 350;
+const COPIED_LABEL_DISPLAY_MS = 1500;
+
 export class HistoryView extends LitElement {
     static properties = {
         entries: { type: Array, state: true },
@@ -73,7 +77,7 @@ export class HistoryView extends LitElement {
                 if (entry.missing) {
                     this._updateEntry(entry.id, { missing: false });
                     this.foundId = entry.id;
-                    setTimeout(() => (this.foundId = null), 2000);
+                    setTimeout(() => (this.foundId = null), FOUND_BADGE_DISPLAY_MS);
                 }
                 return;
             }
@@ -81,7 +85,7 @@ export class HistoryView extends LitElement {
             if (result.missing) {
                 this._updateEntry(entry.id, { missing: true });
                 this.shakeId = entry.id;
-                setTimeout(() => (this.shakeId = null), 350);
+                setTimeout(() => (this.shakeId = null), SHAKE_ANIMATION_MS);
             }
         });
         this.requestUpdate();
@@ -96,7 +100,7 @@ export class HistoryView extends LitElement {
         this._lock.run(`copy-${entry.id}`, async () => {
             await navigator.clipboard.writeText(entry.url);
             this.copiedId = entry.id;
-            setTimeout(() => (this.copiedId = null), 1500);
+            setTimeout(() => (this.copiedId = null), COPIED_LABEL_DISPLAY_MS);
         });
         this.requestUpdate();
     }

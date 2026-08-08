@@ -1,4 +1,6 @@
-export function createActionLock(cooldownMs = 800) {
+const DEFAULT_COOLDOWN_MS = 800;
+
+export function createActionLock(DEFAULT_COOLDOWN_MS) {
     const locked = new Set();
 
     return {

@@ -27,8 +27,16 @@ _SAMPLE_VIDEO = Video(
     artist="Bad Bunny",
 )
 
+PROGRESS_EMIT_INTERVAL_S = 0.25
+
 _AUDIO_EXTENSIONS = {"mp3": "mp3", "m4a": "m4a", "wav": "wav", "flac": "flac", "vorbis": "ogg"}
 
+BYTES_PER_MB = 1_048_576
+
+WINDOW_TITLE = "YT DOWNLOADER"
+WINDOW_WIDTH = 1280
+WINDOW_HEIGHT = 720
+WINDOW_MIN_SIZE = (600, 400)
 
 class API:
 
@@ -128,7 +136,7 @@ class API:
 
             if status == "downloading":
                 now = time.time()
-                if now - last_emit["t"] < 0.25:
+                if now - last_emit["t"] < PROGRESS_EMIT_INTERVAL_S:
                     return
                 last_emit["t"] = now
 
@@ -139,9 +147,9 @@ class API:
                 self._emit_progress({
                     "status": "downloading",
                     "percent": percent,
-                    "downloaded_mb": round(downloaded / 1_048_576, 2),
-                    "total_mb": round(total / 1_048_576, 2) if total else None,
-                    "speed_mb_s": round((d.get("speed") or 0) / 1_048_576, 2),
+                    "downloaded_mb": round(downloaded / BYTES_PER_MB, 2),
+                    "total_mb": round(total / BYTES_PER_MB, 2) if total else None,
+                    "speed_mb_s": round((d.get("speed") or 0) / BYTES_PER_MB, 2),
                     "eta_seconds": d.get("eta"),
                 })
 
@@ -304,11 +312,11 @@ def launch_app():
     url = VITE_DEV_URL if IS_DEV else _DIST_INDEX
 
     webview.create_window(
-        title="YT DOWNLOADER",
+        title=WINDOW_TITLE,
         url=url,
         js_api=api,
-        width=1280,
-        height=720,
-        min_size=(600, 400)
+        width=WINDOW_WIDTH,
+        height=WINDOW_HEIGHT,
+        min_size=WINDOW_MIN_SIZE
     )
     webview.start(debug=IS_DEV)
