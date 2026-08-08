@@ -10,6 +10,14 @@ AUDIO_CODEC_PRIORITY = {
     "opus": 1,
 }
 
+AUDIO_OUTPUT_FORMATS = [
+    ("mp3", "MP3"),
+    ("m4a", "M4A (AAC)"),
+    ("wav", "WAV"),
+    ("flac", "FLAC"),
+    ("vorbis", "OGG"),
+]
+
 def video_codec_name(codec: str) -> str:
     if codec.startswith("avc1"):
         return "avc1"

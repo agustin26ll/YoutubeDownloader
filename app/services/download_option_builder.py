@@ -1,14 +1,10 @@
 from app.models.video_format import VideoFormat
 from app.models.download_option import DownloadOption
-from app.utils.codec_utils import video_codec_name
+from app.utils.codec_utils import (
+    AUDIO_OUTPUT_FORMATS,
+    video_codec_name,
+)
 
-_AUDIO_FORMATS = [
-    ("mp3", "MP3"),
-    ("m4a", "M4A (AAC)"),
-    ("wav", "WAV"),
-    ("flac", "FLAC"),
-    ("vorbis", "OGG"),
-]
 
 class DownloadOptionBuilder:
     """Construye DownloadOption a partir de VideoFormat ya seleccionados."""
@@ -47,6 +43,6 @@ class DownloadOptionBuilder:
                 is_audio=True,
                 audio_codec=codec,
             )
-            for codec, label in _AUDIO_FORMATS
+            for codec, label in AUDIO_OUTPUT_FORMATS
         ]
     
