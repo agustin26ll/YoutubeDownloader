@@ -10,3 +10,4 @@ export { AdvancedSettingsModal } from "./advanced-settings-modal.js";
 export { SettingsToggleOption } from "./settings-toggle-option.js";
 export { SettingsTabFolder } from "./settings-tab-folder.js";
 export { SettingsTabQuality } from "./settings-tab-quality.js";
+export { FilenameInput } from "./filename-input.js";

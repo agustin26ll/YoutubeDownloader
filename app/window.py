@@ -118,7 +118,7 @@ class API:
         except Exception:
             pass
 
-    def download(self, option_index: int, output_directory: str, is_audio: bool = False) -> dict:
+    def download(self, option_index: int, output_directory: str, is_audio: bool = False, custom_filename: str | None = None) -> dict:
         options_list = self._last_audio_options if is_audio else self._last_video_options
 
         if not self._last_url or option_index >= len(options_list):
@@ -158,7 +158,7 @@ class API:
 
         try:
             request = DownloadRequest(url=self._last_url, output_directory=resolved_dir, options=selected_option)
-            filename = self.controller.download(request, progress_callback=on_progress)
+            filename = self.controller.download(request, progress_callback=on_progress, custom_filename=custom_filename)
 
             extension = _AUDIO_EXTENSIONS.get(selected_option.audio_codec, "mp3") if is_audio else "mp4"
 

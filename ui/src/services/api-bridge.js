@@ -8,8 +8,8 @@ export async function getSettings() {
     return await window.pywebview.api.get_settings();
 }
 
-export async function downloadVideo(optionIndex, outputDirectory, isAudio) {
-    return await window.pywebview.api.download(optionIndex, outputDirectory, isAudio);
+export async function downloadVideo(optionIndex, outputDirectory, isAudio, customFilename) {
+    return await window.pywebview.api.download(optionIndex, outputDirectory, isAudio,  customFilename || null);
 }
 
 // CONFIGURACION DE NOMENCLATURA Y PREVISUALIZACION DE NOMBRE DE ARCHIVO
