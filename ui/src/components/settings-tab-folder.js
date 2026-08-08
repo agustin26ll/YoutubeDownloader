@@ -45,7 +45,8 @@ export class SettingsTabFolder extends LitElement {
             <div class="options">
                 <label class="option ${this.folderMode === "default" ? "selected" : ""}">
                     <input
-                        type="radio"
+                        type="radio"ked
+                        name="folder-mode"
                         ?checked=${this.folderMode === "default"}
                         @change=${() => this._select("default")}
                     />
@@ -65,6 +66,7 @@ export class SettingsTabFolder extends LitElement {
                 <label class="option ${this.folderMode === "manual" ? "selected" : ""}">
                     <input
                         type="radio"
+                        name="folder-mode"
                         ?checked=${this.folderMode === "manual"}
                         @change=${() => this._select("manual")}
                     />

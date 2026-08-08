@@ -2,6 +2,7 @@ import { LitElement, html, css } from "lit";
 import styles from "/src/styles/views/history-view.css?inline";
 import interactiveStyles from "/src/styles/shared/interactive.css?inline";
 import "../components/app-icon.js";
+import { pywebviewReady } from "../services/bridge-ready.js";
 import { formatDuration } from "../utils/duration.js";
 import { createActionLock } from "../utils/action-lock.js";
 import {
@@ -10,11 +11,14 @@ import {
     openHistoryFile,
     openHistoryFolder,
     redownloadFromHistory,
+    deleteHistoryItem,
+    clearHistory
 } from "../services/api-bridge.js";
 
 const FOUND_BADGE_DISPLAY_MS = 2000;
 const SHAKE_ANIMATION_MS = 350;
 const COPIED_LABEL_DISPLAY_MS = 1500;
+const REMOVE_ANIMATION_MS = 500;
 
 export class HistoryView extends LitElement {
     static properties = {
@@ -25,6 +29,7 @@ export class HistoryView extends LitElement {
         foundId: { type: String, state: true },
         copiedId: { type: String, state: true },
         error: { type: String, state: true },
+        removingId: { type: String, state: true },
     };
 
     static styles = [css([styles]), css([interactiveStyles])];
@@ -38,16 +43,20 @@ export class HistoryView extends LitElement {
         this.foundId = null;
         this.copiedId = null;
         this.error = null;
+        this.removingId = null;
         this._lock = createActionLock(800);
     }
 
     connectedCallback() {
         super.connectedCallback();
+        this.addEventListener("view-activated", this._load.bind(this));
         this._load();
     }
 
     async _load() {
         this.loading = true;
+        await pywebviewReady();
+        
         const result = await getHistory();
 
         const withStatus = await Promise.all(
@@ -122,88 +131,118 @@ export class HistoryView extends LitElement {
         this.requestUpdate();
     }
 
+    _handleDelete(entry) {
+        this._lock.run(`delete-${entry.id}`, async () => {
+            this.removingId = entry.id;
+            await new Promise((resolve) => setTimeout(resolve, REMOVE_ANIMATION_MS));
+            await deleteHistoryItem(entry.id);
+            this.entries = this.entries.filter((e) => e.id !== entry.id);
+            this.removingId = null;
+        });
+        this.requestUpdate();
+    }
+
+    async _handleClearAll() {
+        if (!this.entries.length) return;
+        await clearHistory();
+        this.entries = [];
+    }
+
     render() {
         if (this.loading) return html`<p class="hint">Cargando...</p>`;
 
         return html`
+        <div class="header-row">
             <h1>Historial</h1>
-            ${this.error ? html`<p class="error">${this.error}</p>` : ""}
-            ${!this.entries.length
+            ${this.entries.length
+                ? html`
+                      <button class="icon-btn" data-tooltip="Limpiar todo" @click=${this._handleClearAll}>
+                          <app-icon name="trash-2"></app-icon>
+                      </button>
+                  `
+                : ""}
+        </div>
+        ${this.error ? html`<p class="error">${this.error}</p>` : ""}
+        ${!this.entries.length
                 ? html`<p class="hint">Aún no hay descargas.</p>`
                 : html`
-                      <div class="list">
-                          ${this.entries.map(
-                              (entry) => html`
-                                  <div class="item">
-                                      <img src=${entry.thumbnail} alt="" />
-
-                                      <div class="info">
-                                          <div class="title-row">
-                                              <p class="title">${entry.title}</p>
-                                              ${entry.missing
-                                                  ? html`<span class="badge badge-missing">
-                                                        <app-icon name="alert-triangle" size="12"></app-icon>
-                                                        Eliminado
-                                                    </span>`
-                                                  : ""}
-                                              ${this.foundId === entry.id
-                                                  ? html`<span class="badge badge-found">
-                                                        <app-icon name="check" size="12"></app-icon>
-                                                        Encontrado
-                                                    </span>`
-                                                  : ""}
-                                          </div>
-
-                                          <div class="tags-row">
-                                              <span class="tag">${entry.uploader}</span>
-                                              <span class="tag">${entry.is_audio ? "Audio" : "Video"}</span>
-                                              <span class="tag tag-quality">${entry.quality_label}</span>
-                                              <span class="tag">${formatDuration(entry.duration_seconds)}</span>
-                                          </div>
-
-                                          <p class="date">Descargado: ${this._formatDate(entry.downloaded_at)}</p>
+                  <div class="list">
+                      ${this.entries.map(
+                    (entry) => html`
+                              <div class="item ${this.removingId === entry.id ? "removing" : ""}">
+                                  <img src=${entry.thumbnail} alt="" />
+                                  <div class="info">
+                                      <div class="title-row">
+                                          <p class="title">${entry.title}</p>
+                                          ${entry.missing
+                            ? html`<span class="badge badge-missing">
+                                                    <app-icon name="alert-triangle" size="12"></app-icon>
+                                                    Eliminado
+                                                </span>`
+                            : ""}
+                                          ${this.foundId === entry.id
+                            ? html`<span class="badge badge-found">
+                                                    <app-icon name="check" size="12"></app-icon>
+                                                    Encontrado
+                                                </span>`
+                            : ""}
                                       </div>
-
-                                      <div class="actions">
-                                          <button
-                                              class="icon-btn"
-                                              data-tooltip="Abrir archivo"
-                                              ?disabled=${this._lock.isLocked(`open-${entry.id}`)}
-                                              @click=${() => this._handleOpen(entry)}
-                                          >
-                                              <app-icon name="external-link"></app-icon>
-                                          </button>
-                                          <button
-                                              class="icon-btn"
-                                              data-tooltip="Ir a la carpeta"
-                                              ?disabled=${this._lock.isLocked(`folder-${entry.id}`)}
-                                              @click=${() => this._handleOpenFolder(entry)}
-                                          >
-                                              <app-icon name="folder-open"></app-icon>
-                                          </button>
-                                          <button
-                                              class="icon-btn"
-                                              data-tooltip=${this.copiedId === entry.id ? "¡Copiado!" : "Copiar enlace"}
-                                              ?disabled=${this._lock.isLocked(`copy-${entry.id}`)}
-                                              @click=${() => this._handleCopyUrl(entry)}
-                                          >
-                                              <app-icon name=${this.copiedId === entry.id ? "check" : "link"}></app-icon>
-                                          </button>
-                                          <button
-                                              class="icon-btn ${this.shakeId === entry.id ? "shake" : ""}"
-                                              data-tooltip="Descargar de nuevo"
-                                              ?disabled=${this.redownloadingId === entry.id || this._lock.isLocked(`redownload-${entry.id}`)}
-                                              @click=${() => this._handleRedownload(entry)}
-                                          >
-                                              <app-icon name="refresh-cw"></app-icon>
-                                          </button>
+                                      <div class="tags-row">
+                                          <span class="tag">${entry.uploader}</span>
+                                          <span class="tag">${entry.is_audio ? "Audio" : "Video"}</span>
+                                          <span class="tag tag-quality">${entry.quality_label}</span>
+                                          <span class="tag">${formatDuration(entry.duration_seconds)}</span>
                                       </div>
+                                      <p class="date">Descargado: ${this._formatDate(entry.downloaded_at)}</p>
                                   </div>
-                              `
-                          )}
-                      </div>
-                  `}
-        `;
+                                  <div class="actions">
+                                      <button
+                                          class="icon-btn"
+                                          data-tooltip="Abrir archivo"
+                                          ?disabled=${this._lock.isLocked(`open-${entry.id}`)}
+                                          @click=${() => this._handleOpen(entry)}
+                                      >
+                                          <app-icon name="external-link"></app-icon>
+                                      </button>
+                                      <button
+                                          class="icon-btn"
+                                          data-tooltip="Ir a la carpeta"
+                                          ?disabled=${this._lock.isLocked(`folder-${entry.id}`)}
+                                          @click=${() => this._handleOpenFolder(entry)}
+                                      >
+                                          <app-icon name="folder-open"></app-icon>
+                                      </button>
+                                      <button
+                                          class="icon-btn"
+                                          data-tooltip=${this.copiedId === entry.id ? "¡Copiado!" : "Copiar enlace"}
+                                          ?disabled=${this._lock.isLocked(`copy-${entry.id}`)}
+                                          @click=${() => this._handleCopyUrl(entry)}
+                                      >
+                                          <app-icon name=${this.copiedId === entry.id ? "check" : "link"}></app-icon>
+                                      </button>
+                                      <button
+                                          class="icon-btn ${this.shakeId === entry.id ? "shake" : ""}"
+                                          data-tooltip="Descargar de nuevo"
+                                          ?disabled=${this.redownloadingId === entry.id || this._lock.isLocked(`redownload-${entry.id}`)}
+                                          @click=${() => this._handleRedownload(entry)}
+                                      >
+                                          <app-icon name="refresh-cw"></app-icon>
+                                      </button>
+                                      <button
+                                          class="icon-btn icon-btn-danger"
+                                          data-tooltip="Eliminar"
+                                          ?disabled=${this._lock.isLocked(`delete-${entry.id}`)}
+                                          @click=${() => this._handleDelete(entry)}
+                                      >
+                                          <app-icon name="trash"></app-icon>
+                                      </button>
+                                  </div>
+                              </div>
+                          `
+                )}
+                  </div>
+              `}
+    `;
     }
 }
 

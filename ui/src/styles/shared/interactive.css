@@ -36,6 +36,7 @@
     color: var(--color-text-secondary);
     cursor: pointer;
     transition: all var(--transition-base);
+    margin-bottom: var(--space-sm);
 }
 
 .icon-btn:hover {

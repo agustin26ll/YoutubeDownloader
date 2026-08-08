@@ -10,6 +10,7 @@ from app.services.settings_service import SettingsService
 from app.services.video_format_parser import VideoFormatParser
 from app.services.download_option_builder import DownloadOptionBuilder
 from app.services.filename_formatter import FilenameFormatter
+from app.utils.text_cleaner import sanitize_filename
 
 from app.exceptions.video_download_exceptions import (
     VideoNotFoundError,
@@ -116,7 +117,7 @@ class YoutubeService:
 
         return self.builder.build_audio_options(best_audio)
     
-    def download(self, request: DownloadRequest, progress_callback = None) -> None:
+    def download(self, request: DownloadRequest, progress_callback = None, custom_filename: str | None = None) -> None:
         settings = self.settings_service.load()
         ffmpeg_exe = settings.ffmpeg_path / "ffmpeg.exe"
 
@@ -124,7 +125,8 @@ class YoutubeService:
             raise FFmpegNotFoundError("No se encontró ffmpeg. Reinstala la aplicación.")
 
         video = self.get_video(request.url)
-        filename = self.filename_formatter.build(video, settings.naming_expression)
+        filename = sanitize_filename(custom_filename) if custom_filename else self.filename_formatter.build(video, settings.naming_expression)
+
 
         options = self._build_download_options(request, settings, filename)
 

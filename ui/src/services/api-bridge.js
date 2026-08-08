@@ -8,8 +8,8 @@ export async function getSettings() {
     return await window.pywebview.api.get_settings();
 }
 
-export async function downloadVideo(optionIndex, outputDirectory, isAudio) {
-    return await window.pywebview.api.download(optionIndex, outputDirectory, isAudio);
+export async function downloadVideo(optionIndex, outputDirectory, isAudio, customFilename) {
+    return await window.pywebview.api.download(optionIndex, outputDirectory, isAudio,  customFilename || null);
 }
 
 // CONFIGURACION DE NOMENCLATURA Y PREVISUALIZACION DE NOMBRE DE ARCHIVO
@@ -72,4 +72,12 @@ export async function openHistoryFolder(id) {
 
 export async function redownloadFromHistory(id) {
     return await window.pywebview.api.redownload_from_history(id);
+}
+
+export async function deleteHistoryItem(id) {
+    return await window.pywebview.api.delete_history_item(id);
+}
+
+export async function clearHistory() {
+    return await window.pywebview.api.clear_history();
 }

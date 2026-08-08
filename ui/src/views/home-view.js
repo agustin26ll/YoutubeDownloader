@@ -6,13 +6,16 @@ import "../components/download-options-panel.js";
 import "../components/folder-picker.js";
 import "../components/format-toggle.js";
 import "../components/download-progress-bar.js";
+import "../components/filename-input.js";
 
 import {
     getVideoInfo,
     getSettings,
     getDefaultDirectory,
     downloadVideo,
+    previewFilename
 } from "../services/api-bridge.js";
+import { pywebviewReady } from "../services/bridge-ready.js";
 
 const SUCCESS_DISPLAY_DELAY_MS = 700;
 
@@ -31,6 +34,7 @@ export class HomeView extends LitElement {
         customDirectory: { type: String, state: true },
         defaultDirectory: { type: String, state: true },
         autoMaxQuality: { type: Boolean, state: true },
+        customFilename: { type: String, state: true },
     };
 
     static styles = css([styles]);
@@ -51,6 +55,7 @@ export class HomeView extends LitElement {
         this.defaultDirectory = "";
         this.autoMaxQuality = false;
         this._handleSettingsUpdated = this._handleSettingsUpdated.bind(this);
+        this.customFilename = "";
     }
 
     async connectedCallback() {
@@ -60,6 +65,7 @@ export class HomeView extends LitElement {
         this.addEventListener("folder-changed", this._handleFolderChanged);
         this.addEventListener("mode-changed", this._handleModeChanged);
         window.addEventListener("settings-updated", this._handleSettingsUpdated);
+        this.addEventListener("filename-changed", this._handleFilenameChanged);
 
         this._loadSettings();
     }
@@ -71,7 +77,12 @@ export class HomeView extends LitElement {
         this.removeEventListener("folder-changed", this._handleFolderChanged);
         this.removeEventListener("mode-changed", this._handleModeChanged);
         window.removeEventListener("settings-updated", this._handleSettingsUpdated);
+        this.removeEventListener("filename-changed", this._handleFilenameChanged);
     }
+
+    // HANDLERS
+
+    // Handler de actualización de configuración, para actualizar el estado de la vista cuando se cambian las configuraciones globales.
 
     async _handleSettingsUpdated(e) {
         const { folder_mode, auto_max_quality } = e.detail;
@@ -87,7 +98,10 @@ export class HomeView extends LitElement {
         }
     }
 
+    // Carga de configuración inicial
+
     async _loadSettings() {
+        await pywebviewReady();
         const settings = await getSettings();
         this.folderMode = settings.folder_mode;
         this.customDirectory = settings.custom_directory;
@@ -96,15 +110,15 @@ export class HomeView extends LitElement {
         await this._refreshDefaultDirectory();
     }
 
+    // Actualiza el directorio por defecto si el modo de carpeta es "default"
+
     async _refreshDefaultDirectory() {
         if (this.folderMode !== "default") return;
         const result = await getDefaultDirectory(this.mode === "audio");
         this.defaultDirectory = result.path;
     }
 
-    get _outputDirectory() {
-        return this.folderMode === "manual" ? this.customDirectory : this.defaultDirectory;
-    }
+    // Handler de búsqueda de video, que se activa cuando el usuario ingresa una URL y presiona Enter.
 
     _handleSearch = async (e) => {
         this.loading = true;
@@ -126,14 +140,13 @@ export class HomeView extends LitElement {
         this.audioOptions = result.audio_options;
         this.mode = "video";
         this._applyQualityDefault();
+
+        const preview = await previewFilename(null);
+        this.customFilename = preview.filename;
     };
 
     _handleOptionSelected = (e) => {
         this.selectedIndex = e.detail.index;
-    };
-
-    _handleFolderChanged = (e) => {
-        this.customDirectory = e.detail.path;
     };
 
     _handleModeChanged = async (e) => {
@@ -142,14 +155,9 @@ export class HomeView extends LitElement {
         await this._refreshDefaultDirectory();
     };
 
-    _applyQualityDefault() {
-        if (this.mode !== "video" || !this.videoOptions.length) return;
-        this.selectedIndex = this.autoMaxQuality ? this.videoOptions.length - 1 : 0;
-    }
-
-    get _currentOptions() {
-        return this.mode === "audio" ? this.audioOptions : this.videoOptions;
-    }
+    _handleFolderChanged = (e) => {
+        this.customDirectory = e.detail.path;
+    };
 
     _handleDownload = async () => {
         const picker = this.renderRoot.querySelector("folder-picker");
@@ -160,7 +168,12 @@ export class HomeView extends LitElement {
         this.error = null;
         this.downloadSuccess = false;
 
-        const result = await downloadVideo(this.selectedIndex, this._outputDirectory, this.mode === "audio");
+        const result = await downloadVideo(
+                            this.selectedIndex,
+                            this._outputDirectory,
+                            this.mode === "audio",
+                            this.customFilename.trim()
+                        );
 
         if (!result.success) {
             this.downloading = false;
@@ -173,6 +186,19 @@ export class HomeView extends LitElement {
             this.downloadSuccess = true;
         }, SUCCESS_DISPLAY_DELAY_MS);
     };
+
+    _applyQualityDefault() {
+        if (this.mode !== "video" || !this.videoOptions.length) return;
+        this.selectedIndex = this.autoMaxQuality ? this.videoOptions.length - 1 : 0;
+    }
+
+    get _outputDirectory() {
+        return this.folderMode === "manual" ? this.customDirectory : this.defaultDirectory;
+    }
+
+    get _currentOptions() {
+        return this.mode === "audio" ? this.audioOptions : this.videoOptions;
+    }
 
     render() {
         return html`
@@ -188,6 +214,10 @@ export class HomeView extends LitElement {
                                 .selectedIndex=${this.selectedIndex}
                                 .disabled=${this.autoMaxQuality && this.mode === "video"}
                             ></download-options-panel>`}
+
+                      <filename-input .value=${this.customFilename}
+                            placeholder="Nombre automático">
+                        </filename-input>  
 
                       <folder-picker
                           .path=${this._outputDirectory}

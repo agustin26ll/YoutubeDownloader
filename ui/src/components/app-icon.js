@@ -7,6 +7,8 @@ import iconRefreshCw from "lucide-static/icons/refresh-cw.svg?raw";
 import iconAlertTriangle from "lucide-static/icons/alert-triangle.svg?raw";
 import iconLink from "lucide-static/icons/link.svg?raw";
 import iconCheck from "lucide-static/icons/check.svg?raw";
+import iconTrash2 from "lucide-static/icons/trash-2.svg?raw";
+import iconTrash from "lucide-static/icons/trash.svg?raw";
 
 const ICONS = {
     "external-link": iconExternalLink,
@@ -15,6 +17,8 @@ const ICONS = {
     "alert-triangle": iconAlertTriangle,
     "link": iconLink,
     "check": iconCheck,
+    "trash-2": iconTrash2,
+    "trash": iconTrash,
 };
 
 export class AppIcon extends LitElement {
