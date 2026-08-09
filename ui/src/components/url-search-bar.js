@@ -1,5 +1,6 @@
 import { LitElement, html, css } from "lit";
 import styles from "/src/styles/components/url-search-bar.css?inline";
+import { t } from "../i18n/index.js";
 
 export class UrlSearchBar extends LitElement {
     static properties = {
@@ -37,13 +38,13 @@ export class UrlSearchBar extends LitElement {
             <form @submit=${this._handleSubmit}>
                 <input
                     type="text"
-                    placeholder="Pega el enlace de YouTube..."
+                    placeholder=${t("home.search_placeholder")}
                     .value=${this.value}
                     @input=${this._handleInput}
                     ?disabled=${this.loading}
                 />
                 <button type="submit" ?disabled=${this.loading}>
-                    ${this.loading ? "Buscando..." : "Buscar"}
+                    ${this.loading ? t("home.searching") : t("home.search_button")}
                 </button>
             </form>
         `;

@@ -1,5 +1,7 @@
 import { LitElement, html, css } from "lit";
 import styles from "/src/styles/components/settings-tab-naming.css?inline";
+import { t } from "../i18n/index.js";
+
 import { previewFilename, updateNamingExpression } from "../services/api-bridge.js";
 
 const AVAILABLE_TOKENS = [
@@ -69,7 +71,7 @@ export class SettingsTabNaming extends LitElement {
     render() {
         return html`
             <div class="tab-content">
-                <label>Expresión de nombre</label>
+                <label>${t("settings.naming.label")}</label>
                 <input
                     type="text"
                     .value=${this.expression}
@@ -78,12 +80,12 @@ export class SettingsTabNaming extends LitElement {
                 />
 
                 <div class="preview">
-                    <span class="preview-label">Vista previa:</span>
+                    <span class="preview-label">${t("settings.naming.preview_label")}</span>
                     <span class="preview-value">${this.preview || "..."}.mp4</span>
                 </div>
 
                 <div class="tokens-section">
-                    <p class="section-title">Tokens</p>
+                    <p class="section-title">${t("settings.naming.tokens_title")}</p>
                     <div class="chips">
                         ${AVAILABLE_TOKENS.map(
                             (t) => html`
@@ -96,7 +98,7 @@ export class SettingsTabNaming extends LitElement {
                 </div>
 
                 <div class="tokens-section">
-                    <p class="section-title">Modificadores (agregar después de un token, ej. {title:upper})</p>
+                    <p class="section-title">${t("settings.naming.modifiers_title")}</p>
                     <div class="chips">
                         ${MODIFIERS.map(
                             (m) => html`<span class="chip static" title=${m.desc}>${m.mod}</span>`
@@ -105,7 +107,7 @@ export class SettingsTabNaming extends LitElement {
                 </div>
 
                 <button class="save-btn" @click=${this._handleSave}>
-                    ${this.saved ? "✓ Guardado" : "Guardar"}
+                    ${this.saved ? t("settings.naming.saved") : t("settings.naming.save")}
                 </button>
             </div>
         `;

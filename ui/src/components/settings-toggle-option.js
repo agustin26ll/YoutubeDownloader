@@ -1,5 +1,6 @@
 import { LitElement, html, css } from "lit";
 import styles from "/src/styles/components/settings-toggle-option.css?inline";
+import { t } from "../i18n/index.js";
 
 const SAVE_CONFIRMATION_DISPLAY_MS = 2000;
 
@@ -54,7 +55,7 @@ export class SettingsToggleOption extends LitElement {
                     </div>
                 </label>
             </div>
-            ${this.saved ? html`<p class="saved-hint">✓ Guardado</p>` : ""}
+            ${this.saved ? html`<p class="saved-hint">${t("settings.naming.saved")}</p>` : ""}
         `;
     }
 }

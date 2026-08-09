@@ -3,13 +3,19 @@ import styles from "/src/styles/components/advanced-settings-modal.css?inline";
 import "./settings-tab-naming.js";
 import "./settings-tab-folder.js";
 import "./settings-tab-quality.js";
+import "./settings-tab-language.js";
+import { t } from "../i18n/index.js";
+
 import { getSettings } from "../services/api-bridge.js";
 
-const TABS = [
-    { id: "naming", label: "Nombre de archivo" },
-    { id: "folder", label: "Carpeta" },
-    { id: "quality", label: "Calidad" },
-];
+function getTabs() {
+    return [
+        { id: "naming", label: t("settings.tabs.naming") },
+        { id: "folder", label: t("settings.tabs.folder") },
+        { id: "quality", label: t("settings.tabs.quality") },
+        { id: "language", label: t("settings.tabs.language") },
+    ];
+}
 
 export class AdvancedSettingsModal extends LitElement {
     static properties = {
@@ -18,6 +24,8 @@ export class AdvancedSettingsModal extends LitElement {
         namingExpression: { type: String, state: true },
         folderMode: { type: String, state: true },
         autoMaxQuality: { type: Boolean, state: true },
+        createSubfolder: { type: Boolean, state: true },
+        language: { type: String, state: true },
     };
 
     static styles = css([styles]);
@@ -48,6 +56,8 @@ export class AdvancedSettingsModal extends LitElement {
         const settings = await getSettings();
         this.namingExpression = settings.naming_expression;
         this.folderMode = settings.folder_mode;
+        this.createSubfolder = settings.create_subfolder;
+        this.language = settings.language;
         this.autoMaxQuality = settings.auto_max_quality;
         this.open = true;
     }
@@ -65,9 +75,11 @@ export class AdvancedSettingsModal extends LitElement {
             case "naming":
                 return html`<settings-tab-naming .expression=${this.namingExpression}></settings-tab-naming>`;
             case "folder":
-                return html`<settings-tab-folder .folderMode=${this.folderMode}></settings-tab-folder>`;
+                return html`<settings-tab-folder .folderMode=${this.folderMode} .createSubfolder=${this.createSubfolder}></settings-tab-folder>`;
             case "quality":
                 return html`<settings-tab-quality .autoMaxQuality=${this.autoMaxQuality}></settings-tab-quality>`;
+            case "language":
+                return html`<settings-tab-language .language=${this.language}></settings-tab-language>`;
         }
     }
 
@@ -78,20 +90,18 @@ export class AdvancedSettingsModal extends LitElement {
             <div class="overlay" @click=${this.close}>
                 <div class="modal" @click=${(e) => e.stopPropagation()}>
                     <div class="header">
-                        <h2>Configuración avanzada</h2>
+                        <h2>${t("settings.tabs.title")}</h2>
                         <button class="close-btn" @click=${this.close}>✕</button>
                     </div>
                     <div class="body">
                         <nav class="tabs">
-                            ${TABS.map(
-            (tab) => html`
-                                    <button
+                            ${getTabs().map((tab) => html`
+                                <button
                                         class="tab ${this.activeTab === tab.id ? "active" : ""}"
                                         @click=${() => this._selectTab(tab.id)}
                                     >
                                         ${tab.label}
-                                    </button>
-                                `
+                                    </button>`
         )}
                         </nav>
                         <div class="tab-panel">${this._renderTab()}</div>

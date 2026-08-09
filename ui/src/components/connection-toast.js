@@ -1,6 +1,7 @@
 import { LitElement, html, css } from "lit";
 import styles from "/src/styles/components/connection-toast.css?inline";
 import { startConnectionMonitor } from "../services/connection-monitor.js";
+import { t } from "../i18n/index.js";
 
 const RECONNECT_TOAST_DISPLAY_MS = 3000;
 
@@ -51,7 +52,7 @@ export class ConnectionToast extends LitElement {
 
         return html`
             <div class="toast ${this.online ? "online" : "offline"}">
-                ${this.online ? "✓ Conexión restablecida" : "⚠ Sin conexión a internet"}
+                ${this.online ? `✓ ${t("connection.online")}` : `⚠ ${t("connection.offline")}`}
             </div>
         `;
     }

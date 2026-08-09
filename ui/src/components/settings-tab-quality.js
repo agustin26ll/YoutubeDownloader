@@ -1,5 +1,7 @@
 import { LitElement, html } from "lit";
 import "./settings-toggle-option.js";
+import { t } from "../i18n/index.js";
+
 import { updateAutoMaxQuality } from "../services/api-bridge.js";
 
 export class SettingsTabQuality extends LitElement {
@@ -22,10 +24,10 @@ export class SettingsTabQuality extends LitElement {
         return html`
             <settings-toggle-option
                 .value=${this.autoMaxQuality}
-                optionOffLabel="Seleccionar siempre"
-                optionOffDesc="Muestra el panel de calidades para elegir en cada descarga."
-                optionOnLabel="Máxima calidad automática"
-                optionOnDesc="Descarga directo en la mejor calidad disponible, sin preguntar."
+                optionOffLabel=${t("settings.quality.manual_title")}
+                optionOffDesc=${t("settings.quality.manual_desc")}
+                optionOnLabel=${t("settings.quality.auto_title")}
+                optionOnDesc=${t("settings.quality.auto_desc")}
                 @value-changed=${this._handleChange}
             ></settings-toggle-option>
         `;

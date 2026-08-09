@@ -1,0 +1,115 @@
+{
+  "errors": {
+    "invalid_url": "The URL does not correspond to a valid YouTube video.",
+    "video_unavailable": "This video is unavailable in your region, private, or age-restricted. If you're using a VPN, check that it's active and try again.",
+    "video_not_found": "Could not get video information. Check the URL.",
+    "ffmpeg_missing": "ffmpeg was not found. Reinstall the application.",
+    "folder_missing": "The destination folder no longer exists. Select it again.",
+    "folder_create_failed": "Could not create the folder.",
+    "folder_open_failed": "Could not open the folder.",
+    "file_open_failed": "Could not open the file.",
+    "file_missing": "The file no longer exists.",
+    "no_valid_selection": "No valid video selected.",
+    "unexpected": "An unexpected error occurred. Please try again.",
+    "download_failed": "An unexpected error occurred during the download.",
+    "history_item_not_found": "Item not found.",
+    "history_folder_missing": "The original folder no longer exists.",
+    "no_formats_available": "No formats available for this video.",
+    "folder_no_longer_exists": "The folder no longer exists."
+  },
+  "sidebar": {
+    "home": "Home",
+    "history": "History",
+    "settings": "Settings",
+    "donate": "Donate",
+    "help": "Help"
+  },
+  "connection": {
+    "offline": "No internet connection",
+    "online": "Connection restored"
+  },
+  "home": {
+    "search_placeholder": "Paste the YouTube link...",
+    "search_button": "Search",
+    "searching": "Searching...",
+    "download_button": "Download",
+    "downloading": "Downloading...",
+    "download_success": "Download completed.",
+    "filename_label": "File name",
+    "filename_placeholder": "Automatic name",
+    "quality_auto_suffix": "(highest, automatic)",
+    "quality_title": "Quality"
+  },
+  "folder_picker": {
+    "select_hint": "Select a folder",
+    "browse": "Browse",
+    "open_tooltip": "Open in File Explorer",
+    "missing_warning": "This folder no longer exists.",
+    "recreate_link": "Recreate it",
+    "or_select_other": "or choose another one."
+  },
+  "history": {
+    "title": "History",
+    "empty": "No downloads yet.",
+    "loading": "Loading...",
+    "open_file": "Open file",
+    "open_folder": "Go to folder",
+    "copy_link": "Copy link",
+    "copied": "Copied!",
+    "redownload": "Download again",
+    "delete": "Delete",
+    "clear_all": "Clear all",
+    "missing_badge": "Deleted",
+    "found_badge": "Found",
+    "downloaded_at_prefix": "Downloaded:"
+  },
+  "settings": {
+    "folder": {
+        "default_title": "Default folder",
+        "videos_label": "Videos:",
+        "audios_label": "Audio:",
+        "manual_title": "Choose folder",
+        "manual_desc": "Pick the folder manually from the \"Browse\" button on the home screen.",
+        "subfolder_checkbox": "Create a subfolder per video",
+        "subfolder_preview_prefix": "Will be saved in:"
+    },
+    "quality": {
+        "manual_title": "Always ask",
+        "manual_desc": "Shows the quality panel to choose on every download.",
+        "auto_title": "Automatic highest quality",
+        "auto_desc": "Downloads the best available quality directly, without asking."
+    },
+    "naming": {
+        "label": "Name expression",
+        "preview_label": "Preview:",
+        "tokens_title": "Tokens",
+        "modifiers_title": "Modifiers (add after a token, e.g. {title:upper})",
+        "save": "Save",
+        "saved": "✓ Saved"
+    },
+    "language": {
+        "title": "Language",
+        "auto_label": "Automatic (detect from system)",
+        "es_label": "Español",
+        "en_label": "English",
+        "reload_notice": "The app will reload to apply the language."
+    },
+    "tabs": {
+        "naming": "File name",
+        "folder": "Folder",
+        "quality": "Quality",
+        "language": "Language",
+        "title": "Advanced settings",
+        "coming_soon": "Coming soon"
+    }
+  },
+  "format_toggle": {
+    "video": "Video (MP4)",
+    "audio": "Audio (MP3)"
+  },
+  "status": {
+    "process_file": "Processing file...",
+    "complete": "✓ Completed",
+    "error_download": "Download error"
+  }
+}

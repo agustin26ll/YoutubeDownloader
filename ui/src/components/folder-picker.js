@@ -1,6 +1,13 @@
 import { LitElement, html, css } from "lit";
 import styles from "/src/styles/components/folder-picker.css?inline";
-import { pickFolder, openFolder, checkFolderExists, createFolder } from "../services/api-bridge.js";
+import { t } from "../i18n/index.js";
+
+import {
+    pickFolder,
+    openFolder,
+    checkFolderExists,
+    createFolder
+} from "../services/api-bridge.js";
 
 export class FolderPicker extends LitElement {
     static properties = {
@@ -73,19 +80,18 @@ export class FolderPicker extends LitElement {
         return html`
             <div class="picker">
                 <span class="folder-icon">📁</span>
-                <span class="path" title="Abrir en el Explorador" @click=${this._handleOpenFolder}>
-                    ${this.path || "Selecciona una carpeta"}
+                <span class="path" title=${t("folder_picker.open_tooltip")} @click=${this._handleOpenFolder}>
+                    ${this.path || t("folder_picker.select_hint")}
                 </span>
-                ${this.editable ? html`<button @click=${this._handleBrowse}>Examinar</button>` : ""}
+                ${this.editable ? html`<button @click=${this._handleBrowse}>${t("folder_picker.browse")}</button>` : ""}
             </div>
             ${this.folderMissing
                 ? html`
-                      <p class="warning">
-                          ⚠ Esta carpeta ya no existe.
-                          <a @click=${this._handleRecreate}>Crearla de nuevo</a>
-                          ${this.editable ? "o selecciona otra." : ""}
-                      </p>
-                  `
+          <p class="warning">
+              ⚠ ${t("folder_picker.missing_warning")}
+              <a @click=${this._handleRecreate}>${t("folder_picker.recreate_link")}</a>
+              ${this.editable ? t("folder_picker.or_select_other") : ""}
+          </p>`
                 : ""}
         `;
     }

@@ -1,3 +1,9 @@
+// LENGUAJE
+
+export async function updateLanguage(language) {
+    return await window.pywebview.api.update_language(language);
+}
+
 // VIDEOS 
 
 export async function getVideoInfo(url) {
@@ -27,6 +33,14 @@ export async function updateAutoMaxQuality(value) {
 }
 
 // CARPETAS
+
+export async function updateCreateSubfolder(value) {
+    return await window.pywebview.api.update_create_subfolder(value);
+}
+
+export async function previewSubfolder() {
+    return await window.pywebview.api.preview_subfolder();
+}
 
 export async function updateFolderMode(mode) {
     return await window.pywebview.api.update_folder_mode(mode);

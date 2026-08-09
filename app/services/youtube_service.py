@@ -11,6 +11,7 @@ from app.services.video_format_parser import VideoFormatParser
 from app.services.download_option_builder import DownloadOptionBuilder
 from app.services.filename_formatter import FilenameFormatter
 from app.utils.text_cleaner import sanitize_filename
+from app.i18n.translator import t
 
 from app.exceptions.video_download_exceptions import (
     VideoNotFoundError,
@@ -55,11 +56,8 @@ class YoutubeService:
         except yt_dlp.utils.DownloadError as e:
             message = str(e).lower()
             if any(marker in message for marker in _UNAVAILABLE_MARKERS):
-                raise VideoUnavailableError(
-                        "Este video no está disponible en tu región, es privado o tiene restricción de edad. "
-                    "Si usas VPN, verifica que esté activa e intenta de nuevo."
-                ) from e
-            raise VideoNotFoundError("No se pudo obtener información del video. Verifica la URL.") from e
+                raise VideoUnavailableError(t("errors.video_unavailable")) from e
+            raise VideoNotFoundError(t("errors.video_not_found")) from e
             
     def _build_download_options(self, request: DownloadRequest, settings: Settings, filename: str) -> dict:
         base = {
@@ -88,7 +86,7 @@ class YoutubeService:
     
     def get_video(self, url: str) -> Video:
         if not is_youtube_url(url):
-            raise VideoNotFoundError("La URL no corresponde a un video de YouTube válido.")
+            raise VideoNotFoundError(t("errors.invalid_url"))
 
         info = self._extract_info(url)
         all_formats = self.parser.parse_formats(info)
@@ -116,27 +114,33 @@ class YoutubeService:
         best_audio = self.selector.get_best_audio(video.audio_formats)
 
         return self.builder.build_audio_options(best_audio)
-    
-    def download(self, request: DownloadRequest, progress_callback = None, custom_filename: str | None = None) -> None:
+
+    def download(self, request: DownloadRequest, progress_callback=None, custom_filename: str | None = None) -> str:
         settings = self.settings_service.load()
         ffmpeg_exe = settings.ffmpeg_path / "ffmpeg.exe"
 
         if not ffmpeg_exe.exists():
-            raise FFmpegNotFoundError("No se encontró ffmpeg. Reinstala la aplicación.")
+            raise FFmpegNotFoundError(t("errors.ffmpeg_missing"))
 
         video = self.get_video(request.url)
         filename = sanitize_filename(custom_filename) if custom_filename else self.filename_formatter.build(video, settings.naming_expression)
 
+        output_directory = request.output_directory
+        if settings.create_subfolder:
+            subfolder_name = self.filename_formatter.build(video, settings.naming_expression)
+            output_directory = output_directory / subfolder_name
+            output_directory.mkdir(parents=True, exist_ok=True)
 
-        options = self._build_download_options(request, settings, filename)
+        effective_request = DownloadRequest(url=request.url, output_directory=output_directory, options=request.options)
 
+        options = self._build_download_options(effective_request, settings, filename)
         if progress_callback:
             options["progress_hooks"] = [progress_callback]
-                                     
+
         try:
             with yt_dlp.YoutubeDL(options) as ydl:
                 ydl.download([request.url])
         except yt_dlp.utils.DownloadError as e:
             raise DownloadFailedError(str(e)) from e
 
-        return filename        
+        return filename, output_directory

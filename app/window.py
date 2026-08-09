@@ -6,14 +6,16 @@ import subprocess
 import time
 import json
 
-from app.config.env import IS_DEV, VITE_DEV_URL
+from app.config.env import IS_DEV, VITE_DEV_URL, WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT
+from app.models.download_request import DownloadRequest
+from app.models.video import Video
 from app.controllers.download_controller import DownloadController
 from app.services.youtube_service import YoutubeService
 from app.services.settings_service import SettingsService
 from app.services.history_service import HistoryService
-from app.models.download_request import DownloadRequest
-from app.models.video import Video
 from app.exceptions.video_download_exceptions import VideoDownloadError
+from app.i18n.translator import t
+from app.i18n.locale_resolver import resolve_locale
 
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _DIST_INDEX = os.path.join(_PROJECT_ROOT, "ui", "dist", "index.html")
@@ -33,21 +35,20 @@ _AUDIO_EXTENSIONS = {"mp3": "mp3", "m4a": "m4a", "wav": "wav", "flac": "flac", "
 
 BYTES_PER_MB = 1_048_576
 
-WINDOW_TITLE = "YT DOWNLOADER"
-WINDOW_WIDTH = 1280
-WINDOW_HEIGHT = 720
-WINDOW_MIN_SIZE = (600, 400)
-
 class API:
 
     def __init__(self, controller: DownloadController, settings_service: SettingsService, history_service: HistoryService):
         self.controller = controller
         self.settings_service = settings_service
         self.history_service = history_service
+        self._locale = resolve_locale(settings_service.load())
         self._last_url = None
         self._last_video = None
         self._last_video_options = []
         self._last_audio_options = []
+
+    def _t(self, key: str) -> str:
+        return t(key, locale=self._locale)
 
     # CONFIGURACIÓN DE APP
 
@@ -59,6 +60,9 @@ class API:
             "default_quality": settings.default_quality,
             "naming_expression": settings.naming_expression,
             "auto_max_quality": settings.auto_max_quality,
+            "create_subfolder": settings.create_subfolder,
+            "language": settings.language,
+            "resolved_locale": self._locale,
         }
 
     def get_default_directory(self, is_audio: bool) -> dict:
@@ -66,11 +70,15 @@ class API:
         path = get_default_directory(is_audio)
         return {"path": str(path), "exists": path.exists()}
 
-    # CONFIGURACIÓN DE CARPETAS, CALIDAD Y EXPRESIONES DE NOMBRES DE ARCHIVOS
+    # CONFIGURACIÓN DE CARPETAS, CALIDAD, ACTUALIZAR LENGUAJE Y EXPRESIONES DE NOMBRES DE ARCHIVOS
 
     def update_folder_mode(self, mode: str) -> dict:
         settings = self.settings_service.update_folder_mode(mode)
         return {"success": True, "folder_mode": settings.folder_mode}
+
+    def update_create_subfolder(self, value: bool) -> dict:
+        settings = self.settings_service.update_create_subfolder(value)
+        return {"success": True, "create_subfolder": settings.create_subfolder}
 
     def update_auto_max_quality(self, value: bool) -> dict:
         settings = self.settings_service.update_auto_max_quality(value)
@@ -79,6 +87,21 @@ class API:
     def update_naming_expression(self, expression: str) -> dict:
         settings = self.settings_service.update_naming_expression(expression)
         return {"success": True, "naming_expression": settings.naming_expression}
+
+    def update_language(self, language: str) -> dict:
+        settings = self.settings_service.update_language(language)
+        self._locale = resolve_locale(settings)
+        return {"success": True, "language": settings.language, "resolved_locale": self._locale}
+
+    def preview_subfolder(self) -> dict:
+        settings = self.settings_service.load()
+        if not settings.create_subfolder:
+            return {"enabled": False, "name": None}
+
+        from app.services.filename_formatter import FilenameFormatter
+        sample = self._last_video or _SAMPLE_VIDEO
+        name = FilenameFormatter().build(sample, settings.naming_expression)
+        return {"enabled": True, "name": name}
 
     def preview_filename(self, expression: str) -> dict:
         from app.services.filename_formatter import FilenameFormatter
@@ -108,7 +131,7 @@ class API:
         except VideoDownloadError as e:
             return {"success": False, "error": str(e), "error_type": type(e).__name__}
         except Exception:
-            return {"success": False, "error": "Ocurrió un error inesperado. Intenta de nuevo.", "error_type": "UnknownError"}
+            return {"success": False, "error": self._t("errors.unexpected"), "error_type": "UnknownError"}
 
     def _emit_progress(self, payload: dict) -> None:
         try:
@@ -122,11 +145,11 @@ class API:
         options_list = self._last_audio_options if is_audio else self._last_video_options
 
         if not self._last_url or option_index >= len(options_list):
-            return {"success": False, "error": "No hay un video seleccionado válido."}
+            return {"success": False, "error": self._t("errors.no_valid_selection")}
 
         resolved_dir = Path(output_directory).expanduser().resolve()
         if not resolved_dir.exists():
-            return {"success": False, "error": "La carpeta de destino ya no existe. Selecciónala de nuevo."}
+            return {"success": False, "error": self._t("errors.folder_missing")}
 
         selected_option = options_list[option_index]
         last_emit = {"t": 0.0}
@@ -158,7 +181,8 @@ class API:
 
         try:
             request = DownloadRequest(url=self._last_url, output_directory=resolved_dir, options=selected_option)
-            filename = self.controller.download(request, progress_callback=on_progress, custom_filename=custom_filename)
+
+            filename, effective_dir = self.controller.download(request, progress_callback=on_progress, custom_filename=custom_filename)
 
             extension = _AUDIO_EXTENSIONS.get(selected_option.audio_codec, "mp3") if is_audio else "mp4"
 
@@ -169,7 +193,7 @@ class API:
                 "thumbnail": self._last_video.thumbnail if self._last_video else "",
                 "duration_seconds": self._last_video.duration_seconds if self._last_video else 0,
                 "quality_label": selected_option.label,
-                "output_directory": str(resolved_dir),
+                "output_directory": str(effective_dir),
                 "filename": filename,
                 "extension": extension,
                 "is_audio": is_audio,
@@ -185,7 +209,7 @@ class API:
             return {"success": False, "error": str(e), "error_type": type(e).__name__}
         except Exception:
             self._emit_progress({"status": "error"})
-            return {"success": False, "error": "Ocurrió un error inesperado durante la descarga.", "error_type": "UnknownError"}
+            return {"success": False, "error": self._t("errors.download_failed"), "error_type": "UnknownError"}
 
     # FUNCIONALIDADES DE SELECCIÓN, VERIFICACIÓN, CREACIÓN Y APERTURA DE CARPETAS
 
@@ -206,17 +230,17 @@ class API:
             Path(path).mkdir(parents=True, exist_ok=True)
             return {"success": True}
         except Exception:
-            return {"success": False, "error": "No se pudo crear la carpeta."}
+            return {"success": False, "error": self._t("errors.folder_create_failed")}
 
     def open_folder(self, path: str) -> dict:
         try:
             folder = Path(path)
             if not folder.exists():
-                return {"success": False, "error": "La carpeta no existe."}
+                return {"success": False, "error": self._t("errors.folder_open_failed")}
             os.startfile(str(folder))
             return {"success": True}
         except Exception:
-            return {"success": False, "error": "No se pudo abrir la carpeta."}
+            return {"success": False, "error": self._t("errors.file_missing")}
 
     # FUNCIONALIDADES DE HISTORIAL: OBTENER, ABRIR ARCHIVO Y REDESCARGA
 
@@ -236,26 +260,26 @@ class API:
     def open_history_file(self, entry_id: str) -> dict:
         entry = self.history_service.get_by_id(entry_id)
         if not entry:
-            return {"success": False, "error": "No se encontró el elemento."}
+            return {"success": False, "error": self._t("errors.history_item_not_found")}
 
         file_path = Path(entry.output_directory) / f"{entry.filename}.{entry.extension}"
         if not file_path.exists():
-            return {"success": False, "missing": True, "error": "El archivo ya no existe."}
+            return {"success": False, "missing": True, "error": self._t("errors.file_missing")}
         
         try:
             os.startfile(str(file_path))
             return {"success": True}
         except Exception:
-            return {"success": False, "error": "No se pudo abrir el archivo."}
+            return {"success": False, "error": self._t("errors.file_open_failed")}
         
     def open_history_folder(self, entry_id: str) -> dict:
         entry = self.history_service.get_by_id(entry_id)
         if not entry:
-            return {"success": False, "error": "No se encontró el elemento."}
+            return {"success": False, "error": self._t("errors.history_item_not_found")}
         
         folder = Path(entry.output_directory)
         if not folder.exists():
-            return {"success": False, "error": "La carpeta ya no existe."}
+            return {"success": False, "error": self._t("errors.folder_no_longer_exists")}
         
         file_path = folder / f"{entry.filename}.{entry.extension}"
 
@@ -266,12 +290,12 @@ class API:
                 os.startfile(str(folder))
             return {"success": True}
         except Exception:
-            return {"success": False, "error": "No se pudo abrir la carpeta."}
+            return {"success": False, "error": self._t("errors.folder_open_failed")}
         
     def redownload_from_history(self, entry_id: str) -> dict:
         entry = self.history_service.get_by_id(entry_id)
         if not entry:
-            return {"success": False, "error": "No se encontró el elemento."}
+            return {"success": False, "error": self._t("errors.history_item_not_found")}
 
         try:
             video = self.controller.get_video(entry.url)
@@ -287,7 +311,7 @@ class API:
         )
 
         if matching_index is None:
-            return {"success": False, "error": "No hay formatos disponibles para este video."}
+            return {"success": False, "error": self._t("errors.no_formats_available")}
 
         self._last_url = entry.url
         self._last_video = video
@@ -298,7 +322,7 @@ class API:
 
         resolved_dir = Path(entry.output_directory)
         if not resolved_dir.exists():
-            return {"success": False, "error": "La carpeta original ya no existe."}
+            return {"success": False, "error": self._t("errors.history_folder_missing")}
 
         return self.download(matching_index, str(resolved_dir), entry.is_audio)
 
@@ -325,6 +349,6 @@ def launch_app():
         js_api=api,
         width=WINDOW_WIDTH,
         height=WINDOW_HEIGHT,
-        min_size=WINDOW_MIN_SIZE
+        min_size=(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT)
     )
     webview.start(debug=IS_DEV)
