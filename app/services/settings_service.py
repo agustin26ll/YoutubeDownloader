@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from dataclasses import asdict
 from app.models.settings import Settings
+from app.utils.system_folders import get_default_manual_directory
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -12,13 +13,14 @@ class SettingsService:
     CONFIG_FILE = Path("app/config/settings.json")
 
     _DEFAULTS = Settings(
-        download_directory=_PROJECT_ROOT / "downloads",
+        download_directory=get_default_manual_directory(),
         default_quality="best",
         ffmpeg_path=_PROJECT_ROOT / "tools" / "ffmpeg",
         naming_expression="{artist} - {title:title}",
         folder_mode="default",
         auto_max_quality=False,
-        create_subfolder=False
+        create_subfolder=False,
+        language="auto",
     )
 
     def __init__(self):
@@ -28,13 +30,14 @@ class SettingsService:
         self._validate(settings)
     
         data = {
-        "download_directory": str(settings.download_directory),
-        "default_quality": settings.default_quality,
-        "ffmpeg_path": str(settings.ffmpeg_path),
-        "naming_expression": settings.naming_expression,
-        "folder_mode": settings.folder_mode,
-        "auto_max_quality": settings.auto_max_quality,
-        "create_subfolder": settings.create_subfolder,
+            "download_directory": str(settings.download_directory),
+            "default_quality": settings.default_quality,
+            "ffmpeg_path": str(settings.ffmpeg_path),
+            "naming_expression": settings.naming_expression,
+            "folder_mode": settings.folder_mode,
+            "auto_max_quality": settings.auto_max_quality,
+            "create_subfolder": settings.create_subfolder,
+            "language": settings.language,
         }
     
         self.CONFIG_FILE.write_text(
@@ -57,6 +60,7 @@ class SettingsService:
                 folder_mode=raw.get("folder_mode", "default"),
                 auto_max_quality=raw.get("auto_max_quality", False),
                 create_subfolder=raw.get("create_subfolder", False),
+                language=raw.get("language", "auto"),
             )
         
         except (json.JSONDecodeError, KeyError, TypeError):
@@ -99,6 +103,14 @@ class SettingsService:
     def update_auto_max_quality(self, value: bool) -> Settings:
         settings = self.load()
         settings.auto_max_quality = value
+        self.save(settings)
+        return settings
+
+    def update_language(self, language: str) -> Settings:
+        if language not in ("auto", "es", "en"):
+            raise ValueError(f"Idioma inválido: {language}")
+        settings = self.load()
+        settings.language = language
         self.save(settings)
         return settings
 

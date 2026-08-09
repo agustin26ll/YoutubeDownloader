@@ -1,3 +1,9 @@
+// LENGUAJE
+
+export async function updateLanguage(language) {
+    return await window.pywebview.api.update_language(language);
+}
+
 // VIDEOS 
 
 export async function getVideoInfo(url) {

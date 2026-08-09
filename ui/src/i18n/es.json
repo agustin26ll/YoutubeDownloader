@@ -1,4 +1,22 @@
 {
+  "errors": {
+    "invalid_url": "La URL no corresponde a un video de YouTube válido.",
+    "video_unavailable": "Este video no está disponible en tu región, es privado o tiene restricción de edad. Si usas VPN, verifica que esté activa e intenta de nuevo.",
+    "video_not_found": "No se pudo obtener información del video. Verifica la URL.",
+    "ffmpeg_missing": "No se encontró ffmpeg. Reinstala la aplicación.",
+    "folder_missing": "La carpeta de destino ya no existe. Selecciónala de nuevo.",
+    "folder_create_failed": "No se pudo crear la carpeta.",
+    "folder_open_failed": "No se pudo abrir la carpeta.",
+    "file_open_failed": "No se pudo abrir el archivo.",
+    "file_missing": "El archivo ya no existe.",
+    "no_valid_selection": "No hay un video seleccionado válido.",
+    "unexpected": "Ocurrió un error inesperado. Intenta de nuevo.",
+    "download_failed": "Ocurrió un error inesperado durante la descarga.",
+    "history_item_not_found": "No se encontró el elemento.",
+    "history_folder_missing": "La carpeta original ya no existe.",
+    "no_formats_available": "No hay formatos disponibles para este video.",
+    "folder_no_longer_exists": "La carpeta ya no existe."
+  },
   "sidebar": {
     "home": "Inicio",
     "history": "Historial",
@@ -69,12 +87,21 @@
         "save": "Guardar",
         "saved": "✓ Guardado"
     },
+    "language": {
+        "title": "Idioma",
+        "auto_label": "Automático (detectar del sistema)",
+        "es_label": "Español",
+        "en_label": "English",
+        "reload_notice": "La aplicación se recargará para aplicar el idioma."
+      },
     "tabs": {
         "naming": "Nombre de archivo",
         "folder": "Carpeta",
         "quality": "Calidad",
+        "language": "Idioma",
         "title": "Configuración avanzada",
         "coming_soon": "Próximamente"
+        
     }
   },
   "format_toggle": {
