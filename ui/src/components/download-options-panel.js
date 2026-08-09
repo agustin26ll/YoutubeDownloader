@@ -1,5 +1,6 @@
 import { LitElement, html, css } from "lit";
 import styles from "/src/styles/components/download-options-panel.css?inline";
+import { t } from "../i18n/index.js";
 
 export class DownloadOptionsPanel extends LitElement {
     static properties = {
@@ -36,7 +37,7 @@ export class DownloadOptionsPanel extends LitElement {
         return html`
             <div class="panel">
                 <p class="title">
-                    Calidad ${this.disabled ? "(máxima, automática)" : ""}
+                    ${t("home.quality_title")} ${this.disabled ? t("home.quality_auto_suffix") : ""}
                 </p>
                 <div class="options ${this.disabled ? "disabled" : ""}">
                     ${this.options.map(

@@ -1,5 +1,6 @@
 import { LitElement, html, css } from "lit";
 import styles from "/src/styles/components/format-toggle.css?inline";
+import { t } from "../i18n/index.js";
 
 export class FormatToggle extends LitElement {
     static properties = {
@@ -24,10 +25,10 @@ export class FormatToggle extends LitElement {
         return html`
             <div class="toggle">
                 <button class=${this.mode === "video" ? "active" : ""} @click=${() => this._select("video")}>
-                    Video (MP4)
+                    ${t("format_toggle.video")}
                 </button>
                 <button class=${this.mode === "audio" ? "active" : ""} @click=${() => this._select("audio")}>
-                    Audio (MP3)
+                     ${t("format_toggle.audio")}
                 </button>
             </div>
         `;

@@ -1,5 +1,6 @@
 import { LitElement, html, css } from "lit";
 import styles from "/src/styles/components/filename-input.css?inline";
+import { t } from "../i18n/index.js";
 
 export class FilenameInput extends LitElement {
     static properties = {
@@ -22,7 +23,7 @@ export class FilenameInput extends LitElement {
 
     render() {
         return html`
-            <label>Nombre del archivo</label>
+            <label>${t("settings.tabs.naming")}</label>
             <input
                 type="text"
                 .value=${this.value}

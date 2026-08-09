@@ -7,13 +7,14 @@ import time
 import json
 
 from app.config.env import IS_DEV, VITE_DEV_URL
+from app.models.download_request import DownloadRequest
+from app.models.video import Video
 from app.controllers.download_controller import DownloadController
 from app.services.youtube_service import YoutubeService
 from app.services.settings_service import SettingsService
 from app.services.history_service import HistoryService
-from app.models.download_request import DownloadRequest
-from app.models.video import Video
 from app.exceptions.video_download_exceptions import VideoDownloadError
+from app.i18n.translator import t
 
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _DIST_INDEX = os.path.join(_PROJECT_ROOT, "ui", "dist", "index.html")
@@ -123,7 +124,7 @@ class API:
         except VideoDownloadError as e:
             return {"success": False, "error": str(e), "error_type": type(e).__name__}
         except Exception:
-            return {"success": False, "error": "Ocurrió un error inesperado. Intenta de nuevo.", "error_type": "UnknownError"}
+            return {"success": False, "error": t("errors.unexpected"), "error_type": "UnknownError"}
 
     def _emit_progress(self, payload: dict) -> None:
         try:
@@ -137,11 +138,11 @@ class API:
         options_list = self._last_audio_options if is_audio else self._last_video_options
 
         if not self._last_url or option_index >= len(options_list):
-            return {"success": False, "error": "No hay un video seleccionado válido."}
+            return {"success": False, "error": t("errors.no_valid_selection")}
 
         resolved_dir = Path(output_directory).expanduser().resolve()
         if not resolved_dir.exists():
-            return {"success": False, "error": "La carpeta de destino ya no existe. Selecciónala de nuevo."}
+            return {"success": False, "error": t("errors.folder_missing")}
 
         selected_option = options_list[option_index]
         last_emit = {"t": 0.0}
@@ -202,7 +203,7 @@ class API:
             return {"success": False, "error": str(e), "error_type": type(e).__name__}
         except Exception:
             self._emit_progress({"status": "error"})
-            return {"success": False, "error": "Ocurrió un error inesperado durante la descarga.", "error_type": "UnknownError"}
+            return {"success": False, "error": t("errors.download_failed"), "error_type": "UnknownError"}
 
     # FUNCIONALIDADES DE SELECCIÓN, VERIFICACIÓN, CREACIÓN Y APERTURA DE CARPETAS
 
@@ -223,17 +224,17 @@ class API:
             Path(path).mkdir(parents=True, exist_ok=True)
             return {"success": True}
         except Exception:
-            return {"success": False, "error": "No se pudo crear la carpeta."}
+            return {"success": False, "error": t("errors.folder_create_failed")}
 
     def open_folder(self, path: str) -> dict:
         try:
             folder = Path(path)
             if not folder.exists():
-                return {"success": False, "error": "La carpeta no existe."}
+                return {"success": False, "error": t("errors.folder_open_failed")}
             os.startfile(str(folder))
             return {"success": True}
         except Exception:
-            return {"success": False, "error": "No se pudo abrir la carpeta."}
+            return {"success": False, "error": t("errors.file_missing")}
 
     # FUNCIONALIDADES DE HISTORIAL: OBTENER, ABRIR ARCHIVO Y REDESCARGA
 

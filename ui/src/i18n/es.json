@@ -1,0 +1,89 @@
+{
+  "sidebar": {
+    "home": "Inicio",
+    "history": "Historial",
+    "settings": "Configuración",
+    "donate": "Donar",
+    "help": "Ayuda"
+  },
+  "connection": {
+    "offline": "Sin conexión a internet",
+    "online": "Conexión restablecida"
+  },
+  "home": {
+    "search_placeholder": "Pega el enlace de YouTube...",
+    "search_button": "Buscar",
+    "searching": "Buscando...",
+    "download_button": "Descargar",
+    "downloading": "Descargando...",
+    "download_success": "Descarga completada.",
+    "filename_label": "Nombre del archivo",
+    "filename_placeholder": "Nombre automático",
+    "quality_auto_suffix": "(máxima, automática)",
+    "quality_title": "Calidad"
+  },
+  "folder_picker": {
+    "select_hint": "Selecciona una carpeta",
+    "browse": "Examinar",
+    "open_tooltip": "Abrir en el Explorador",
+    "missing_warning": "Esta carpeta ya no existe.",
+    "recreate_link": "Crearla de nuevo",
+    "or_select_other": "o selecciona otra."
+  },
+  "history": {
+    "title": "Historial",
+    "empty": "Aún no hay descargas.",
+    "loading": "Cargando...",
+    "open_file": "Abrir archivo",
+    "open_folder": "Ir a la carpeta",
+    "copy_link": "Copiar enlace",
+    "copied": "¡Copiado!",
+    "redownload": "Descargar de nuevo",
+    "delete": "Eliminar",
+    "clear_all": "Limpiar todo",
+    "missing_badge": "Eliminado",
+    "found_badge": "Encontrado",
+    "downloaded_at_prefix": "Descargado:"
+  },
+  "settings": {
+    "folder": {
+        "default_title": "Carpeta predeterminada",
+        "videos_label": "Videos:",
+        "audios_label": "Audios:",
+        "manual_title": "Seleccionar carpeta",
+        "manual_desc": "Elige la carpeta manualmente desde el botón \"Examinar\" en el inicio.",
+        "subfolder_checkbox": "Crear subcarpeta por video",
+        "subfolder_preview_prefix": "Se guardará en:"
+    },
+    "quality": {
+        "manual_title": "Seleccionar siempre",
+        "manual_desc": "Muestra el panel de calidades para elegir en cada descarga.",
+        "auto_title": "Máxima calidad automática",
+        "auto_desc": "Descarga directo en la mejor calidad disponible, sin preguntar."
+    },
+    "naming": {
+        "label": "Expresión de nombre",
+        "preview_label": "Vista previa:",
+        "tokens_title": "Tokens",
+        "modifiers_title": "Modificadores (agregar después de un token, ej. {title:upper})",
+        "save": "Guardar",
+        "saved": "✓ Guardado"
+    },
+    "tabs": {
+        "naming": "Nombre de archivo",
+        "folder": "Carpeta",
+        "quality": "Calidad",
+        "title": "Configuración avanzada",
+        "coming_soon": "Próximamente"
+    }
+  },
+  "format_toggle": {
+    "video": "Video (MP4)",
+    "audio": "Audio (MP3)"
+  },
+  "status": {
+    "process_file": "Procesando archivo...",
+    "complete": "✓ Completado",
+    "error_download": "Error en la descarga"
+  }
+}

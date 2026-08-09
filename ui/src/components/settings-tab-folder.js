@@ -1,5 +1,7 @@
 import { LitElement, html, css } from "lit";
 import styles from "/src/styles/components/settings-tab-folder.css?inline";
+import { t } from "../i18n/index.js";
+
 import {
     updateFolderMode,
     updateCreateSubfolder,
@@ -60,29 +62,31 @@ export class SettingsTabFolder extends LitElement {
                 <label class="option ${this.folderMode === "default" ? "selected" : ""}">
                     <input type="radio" name="folder-mode" ?checked=${this.folderMode === "default"} @change=${() => this._select("default")} />
                     <div class="option-body">
-                        <p class="option-title">Carpeta predeterminada</p>
-                        <p class="path-row">Videos: <a @click=${() => this._openPath(this.videoDefaultPath)}>${this.videoDefaultPath}</a></p>
-                        <p class="path-row">Audios: <a @click=${() => this._openPath(this.audioDefaultPath)}>${this.audioDefaultPath}</a></p>
+                        <p class="option-title">${t("settings.folder.default_title")}</p>
+                        <p class="path-row">${t("settings.folder.videos_label")} <a @click=${() => this._openPath(this.videoDefaultPath)}>${this.videoDefaultPath}</a></p>
+                        <p class="path-row">${t("settings.folder.audios_label")} <a @click=${() => this._openPath(this.audioDefaultPath)}>${this.audioDefaultPath}</a></p>
                     </div>
                 </label>
 
                 <label class="option ${this.folderMode === "manual" ? "selected" : ""}">
                     <input type="radio" name="folder-mode" ?checked=${this.folderMode === "manual"} @change=${() => this._select("manual")} />
                     <div class="option-body">
-                        <p class="option-title">Seleccionar carpeta</p>
-                        <p class="option-desc">Elige la carpeta manualmente desde el botón "Examinar" en el inicio.</p>
+                        <p class="option-title">${t("settings.folder.manual_title")}</p>
+                        <p class="option-desc">${t("settings.folder.manual_desc")}</p>
                     </div>
                 </label>
             </div>
 
             <label class="checkbox-row">
                 <input type="checkbox" ?checked=${this.createSubfolder} @change=${this._handleSubfolderToggle} />
-                <span>Crear subcarpeta por video</span>
+                <span>${t("settings.folder.subfolder_checkbox")}</span>
             </label>
 
-            ${this.createSubfolder
-                ? html`<p class="subfolder-preview">Se guardará en: ${this._baseForPreview} / <strong>${this.subfolderName}</strong> /</p>`
-                : ""}
+            ${this.createSubfolder ? html
+                `<p class="subfolder-preview">
+                    ${t("settings.folder.subfolder_preview_prefix")} ${this._baseForPreview} / <strong>${this.subfolderName}</strong> /
+                </p>` : ""
+            }
         `;
     }
 }

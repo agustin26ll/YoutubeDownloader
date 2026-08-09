@@ -1,6 +1,7 @@
 import { LitElement, html, css } from "lit";
 import styles from "/src/styles/components/download-progress-bar.css?inline";
 import { formatMB, formatEta } from "../utils/format-bytes.js";
+import { t } from "../i18n/index.js";
 
 export class DownloadProgressBar extends LitElement {
     static properties = {
@@ -72,11 +73,11 @@ export class DownloadProgressBar extends LitElement {
                 </div>
                 <div class="info">
                     ${this.status === "processing"
-                        ? html`<span>Procesando archivo...</span>`
+                        ? html`<span>${t("status.process_file")}</span>`
                         : this.status === "completed"
-                          ? html`<span class="done">✓ Completado</span>`
+                          ? html`<span class="done">${t("status.complete")}</span>`
                           : this.status === "error"
-                            ? html`<span class="error-text">Error en la descarga</span>`
+                            ? html`<span class="error-text">${t("status.error_download")}</span>`
                             : html`
                                   <span>${formatMB(this.downloadedMb)} / ${formatMB(this.totalMb)}</span>
                                   <span>${this.speedMbS ? `${this.speedMbS.toFixed(1)} MB/s` : ""}</span>

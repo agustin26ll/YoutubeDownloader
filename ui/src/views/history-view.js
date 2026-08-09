@@ -5,6 +5,8 @@ import "../components/app-icon.js";
 import { pywebviewReady } from "../services/bridge-ready.js";
 import { formatDuration } from "../utils/duration.js";
 import { createActionLock } from "../utils/action-lock.js";
+import { t } from "../i18n/index.js";
+
 import {
     getHistory,
     checkHistoryItemExists,
@@ -56,7 +58,7 @@ export class HistoryView extends LitElement {
     async _load() {
         this.loading = true;
         await pywebviewReady();
-        
+
         const result = await getHistory();
 
         const withStatus = await Promise.all(
@@ -153,18 +155,17 @@ export class HistoryView extends LitElement {
 
         return html`
         <div class="header-row">
-            <h1>Historial</h1>
+            <h1>${t("history.title")}</h1>
             ${this.entries.length
                 ? html`
-                      <button class="icon-btn" data-tooltip="Limpiar todo" @click=${this._handleClearAll}>
-                          <app-icon name="trash-2"></app-icon>
-                      </button>
-                  `
+            <button class="icon-btn" data-tooltip=${t("history.clear_all")} @click=${this._handleClearAll}>
+                <app-icon name="trash-2"></app-icon>
+            </button>`
                 : ""}
         </div>
         ${this.error ? html`<p class="error">${this.error}</p>` : ""}
         ${!this.entries.length
-                ? html`<p class="hint">Aún no hay descargas.</p>`
+                ? html`<p class="hint">${t("history.empty")}</p>`
                 : html`
                   <div class="list">
                       ${this.entries.map(
@@ -174,18 +175,18 @@ export class HistoryView extends LitElement {
                                   <div class="info">
                                       <div class="title-row">
                                           <p class="title">${entry.title}</p>
-                                          ${entry.missing
-                            ? html`<span class="badge badge-missing">
+                                          ${entry.missing 
+                                            ? html`<span class="badge badge-missing">
                                                     <app-icon name="alert-triangle" size="12"></app-icon>
-                                                    Eliminado
-                                                </span>`
-                            : ""}
+                                                    ${t("history.missing_badge")}
+                                                </span>` : ""
+                                            }
                                           ${this.foundId === entry.id
-                            ? html`<span class="badge badge-found">
-                                                    <app-icon name="check" size="12"></app-icon>
-                                                    Encontrado
-                                                </span>`
-                            : ""}
+                                            ? html`<span class="badge badge-found">
+                                                <app-icon name="check" size="12"></app-icon>
+                                                ${t("history.found_badge")}
+                                            </span>`: ""
+                                        }
                                       </div>
                                       <div class="tags-row">
                                           <span class="tag">${entry.uploader}</span>
@@ -193,12 +194,12 @@ export class HistoryView extends LitElement {
                                           <span class="tag tag-quality">${entry.quality_label}</span>
                                           <span class="tag">${formatDuration(entry.duration_seconds)}</span>
                                       </div>
-                                      <p class="date">Descargado: ${this._formatDate(entry.downloaded_at)}</p>
+                                      <p class="date">${t("history.downloaded_at_prefix")} ${this._formatDate(entry.downloaded_at)}</p>
                                   </div>
                                   <div class="actions">
                                       <button
                                           class="icon-btn"
-                                          data-tooltip="Abrir archivo"
+                                          data-tooltip=${t("history.open_file")}
                                           ?disabled=${this._lock.isLocked(`open-${entry.id}`)}
                                           @click=${() => this._handleOpen(entry)}
                                       >
@@ -206,7 +207,7 @@ export class HistoryView extends LitElement {
                                       </button>
                                       <button
                                           class="icon-btn"
-                                          data-tooltip="Ir a la carpeta"
+                                          data-tooltip=${t("history.open_folder")}
                                           ?disabled=${this._lock.isLocked(`folder-${entry.id}`)}
                                           @click=${() => this._handleOpenFolder(entry)}
                                       >
@@ -214,7 +215,7 @@ export class HistoryView extends LitElement {
                                       </button>
                                       <button
                                           class="icon-btn"
-                                          data-tooltip=${this.copiedId === entry.id ? "¡Copiado!" : "Copiar enlace"}
+                                          data-tooltip=${this.copiedId === entry.id ? t("history.copied") : t("history.copy_link")}
                                           ?disabled=${this._lock.isLocked(`copy-${entry.id}`)}
                                           @click=${() => this._handleCopyUrl(entry)}
                                       >
@@ -222,7 +223,7 @@ export class HistoryView extends LitElement {
                                       </button>
                                       <button
                                           class="icon-btn ${this.shakeId === entry.id ? "shake" : ""}"
-                                          data-tooltip="Descargar de nuevo"
+                                          data-tooltip=${t("history.redownload")}
                                           ?disabled=${this.redownloadingId === entry.id || this._lock.isLocked(`redownload-${entry.id}`)}
                                           @click=${() => this._handleRedownload(entry)}
                                       >
@@ -230,7 +231,7 @@ export class HistoryView extends LitElement {
                                       </button>
                                       <button
                                           class="icon-btn icon-btn-danger"
-                                          data-tooltip="Eliminar"
+                                          data-tooltip=${t("history.delete")}
                                           ?disabled=${this._lock.isLocked(`delete-${entry.id}`)}
                                           @click=${() => this._handleDelete(entry)}
                                       >

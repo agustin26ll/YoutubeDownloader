@@ -7,6 +7,7 @@ import "../components/folder-picker.js";
 import "../components/format-toggle.js";
 import "../components/download-progress-bar.js";
 import "../components/filename-input.js";
+import { t } from "../i18n/index.js";
 
 import {
     getVideoInfo,
@@ -234,7 +235,7 @@ export class HomeView extends LitElement {
 
                   <filename-input
                       .value=${this.customFilename}
-                      placeholder="Nombre automático"
+                      placeholder=${t("home.filename_placeholder")}
                   ></filename-input>
 
                   ${this.subfolderPreview
@@ -251,14 +252,14 @@ export class HomeView extends LitElement {
                         : ""}
 
                   ${this.error ? html`<p class="error">${this.error}</p>` : ""}
-                  ${this.downloadSuccess ? html`<p class="success">Descarga completada.</p>` : ""}
+                  ${this.downloadSuccess ? html`<p class="success">${t("home.download_success")}</p>` : ""}
 
                   <button
                       class="download-btn"
                       @click=${this._handleDownload}
                       ?disabled=${this.downloading || !this._currentOptions.length}
                   >
-                      ${this.downloading ? "Descargando..." : "Descargar"}
+                        ${this.downloading ? t("home.downloading") : t("home.download_button")}
                   </button>
               `
                 : ""}
