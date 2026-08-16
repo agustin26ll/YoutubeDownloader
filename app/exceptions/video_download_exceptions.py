@@ -16,3 +16,6 @@ class FFmpegNotFoundError(VideoDownloadError):
 
 class DownloadFailedError(VideoDownloadError):
     """Falla genérica durante la descarga/merge."""
+
+class PlaylistUnavailableError(VideoDownloadError):
+    """Playlist privada, eliminada o no accesible públicamente."""

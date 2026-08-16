@@ -13,6 +13,7 @@ from app.controllers.download_controller import DownloadController
 from app.services.youtube_service import YoutubeService
 from app.services.settings_service import SettingsService
 from app.services.history_service import HistoryService
+from app.services.playlist_service import PlaylistService
 from app.exceptions.video_download_exceptions import VideoDownloadError
 from app.i18n.translator import t
 from app.i18n.locale_resolver import resolve_locale
@@ -42,6 +43,7 @@ class API:
         self.settings_service = settings_service
         self.history_service = history_service
         self._locale = resolve_locale(settings_service.load())
+        self.playlist_service = PlaylistService()
         self._last_url = None
         self._last_video = None
         self._last_video_options = []
@@ -132,6 +134,25 @@ class API:
             return {"success": False, "error": str(e), "error_type": type(e).__name__}
         except Exception:
             return {"success": False, "error": self._t("errors.unexpected"), "error_type": "UnknownError"}
+        
+    def get_playlist(self, url: str) -> dict:
+        try:
+            playlist = self.playlist_service.get_playlist(url)
+            return {
+                "success": True,
+                "playlist": {
+                    "title": playlist.title,
+                    "uploader": playlist.uploader,
+                    "items": [asdict(item) for item in playlist.items],
+                },
+            }
+        except VideoDownloadError as e:
+            return {"success": False, "error": str(e), "error_type": type(e).__name__}
+        except Exception:
+            return {"success": False, "error": self._t("errors.unexpected"), "error_type": "UnknownError"}
+
+    def check_is_playlist(self, url: str) -> dict:
+        return {"is_playlist": self.playlist_service.is_playlist_url(url)}
 
     def _emit_progress(self, payload: dict) -> None:
         try:

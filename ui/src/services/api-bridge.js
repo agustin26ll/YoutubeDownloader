@@ -4,10 +4,18 @@ export async function updateLanguage(language) {
     return await window.pywebview.api.update_language(language);
 }
 
-// VIDEOS 
+// VIDEOS
 
 export async function getVideoInfo(url) {
     return await window.pywebview.api.get_video(url);
+}
+
+export async function checkIsPlaylist(url) {
+    return await window.pywebview.api.check_is_playlist(url);
+}
+
+export async function getPlaylist(url) {
+    return await window.pywebview.api.get_playlist(url);
 }
 
 export async function getSettings() {
