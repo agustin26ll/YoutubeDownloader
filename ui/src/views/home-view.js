@@ -7,6 +7,7 @@ import "../components/folder-picker.js";
 import "../components/format-toggle.js";
 import "../components/download-progress-bar.js";
 import "../components/filename-input.js";
+import "../components/playlist-panel.js";
 import { t } from "../i18n/index.js";
 
 import {
@@ -15,7 +16,9 @@ import {
     getDefaultDirectory,
     downloadVideo,
     previewFilename,
-    previewSubfolder
+    previewSubfolder,
+    checkIsPlaylist,
+    getPlaylist
 } from "../services/api-bridge.js";
 import { pywebviewReady } from "../services/bridge-ready.js";
 
@@ -38,6 +41,9 @@ export class HomeView extends LitElement {
         autoMaxQuality: { type: Boolean, state: true },
         customFilename: { type: String, state: true },
         subfolderPreview: { type: String, state: true },
+        isPlaylistMode: { type: Boolean, state: true },
+        playlistTitle: { type: String, state: true },
+        playlistItems: { type: Array, state: true },
     };
 
     static styles = css([styles]);
@@ -60,6 +66,9 @@ export class HomeView extends LitElement {
         this._handleSettingsUpdated = this._handleSettingsUpdated.bind(this);
         this.customFilename = "";
         this.subfolderPreview = null;
+        this.isPlaylistMode = false;
+        this.playlistTitle = "";
+        this.playlistItems = [];
     }
 
     async connectedCallback() {
@@ -70,6 +79,9 @@ export class HomeView extends LitElement {
         this.addEventListener("mode-changed", this._handleModeChanged);
         window.addEventListener("settings-updated", this._handleSettingsUpdated);
         this.addEventListener("filename-changed", this._handleFilenameChanged);
+        this.addEventListener("item-toggle", this._handleToggleItem);
+        this.addEventListener("toggle-all", this._handleToggleAll);
+        this.addEventListener("item-copy-link", this._handleCopyLink);
 
         this._loadSettings();
     }
@@ -82,6 +94,9 @@ export class HomeView extends LitElement {
         this.removeEventListener("mode-changed", this._handleModeChanged);
         window.removeEventListener("settings-updated", this._handleSettingsUpdated);
         this.removeEventListener("filename-changed", this._handleFilenameChanged);
+        this.removeEventListener("item-toggle", this._handleToggleItem);
+        this.removeEventListener("toggle-all", this._handleToggleAll);
+        this.removeEventListener("item-copy-link", this._handleCopyLink);
     }
 
     // HANDLERS
@@ -135,15 +150,8 @@ export class HomeView extends LitElement {
         this.subfolderPreview = result.enabled ? result.name : null;
     }
 
-    // Handler de búsqueda de video, que se activa cuando el usuario ingresa una URL y presiona Enter.
-
-    _handleSearch = async (e) => {
-        this.loading = true;
-        this.error = null;
-        this.downloadSuccess = false;
-        this.video = null;
-
-        const result = await getVideoInfo(e.detail.url);
+    async _loadSingleVideo(url) {
+        const result = await getVideoInfo(url);
 
         this.loading = false;
 
@@ -161,6 +169,44 @@ export class HomeView extends LitElement {
         const preview = await previewFilename(null);
         this.customFilename = preview.filename;
         await this._refreshSubfolderPreview();
+    }
+
+    async _loadPlaylist(url) {
+        const result = await getPlaylist(url);
+        this.loading = false;
+
+        if (!result.success) {
+            this.error = result.error;
+            return;
+        }
+
+        this.isPlaylistMode = true;
+        this.playlistTitle = result.playlist.title;
+        this.playlistItems = result.playlist.items.map((item) => ({
+            ...item,
+            selected: true,
+            error: null,
+        }));
+    }
+
+    // Handler de búsqueda de video, que se activa cuando el usuario ingresa una URL y presiona Enter.
+
+    _handleSearch = async (e) => {
+        const url = e.detail.url;
+        this.loading = true;
+        this.error = null;
+        this.downloadSuccess = false;
+        this.video = null;
+        this.isPlaylistMode = false;
+
+        const playlistCheck = await checkIsPlaylist(url);
+
+        if (playlistCheck.is_playlist) {
+            await this._loadPlaylist(url);
+            return;
+        }
+
+        await this._loadSingleVideo(url)
     };
 
     _handleOptionSelected = (e) => {
@@ -205,6 +251,30 @@ export class HomeView extends LitElement {
         }, SUCCESS_DISPLAY_DELAY_MS);
     };
 
+    _handleToggleItem = (e) => {
+        const { videoId } = e.detail;
+        this.playlistItems = this.playlistItems.map((item) =>
+            item.video_id === videoId ? { ...item, selected: !item.selected } : item
+        );
+    }
+
+    _handleToggleAll = (e) => {
+        const { selected } = e.detail;
+        this.playlistItems = this.playlistItems.map((item) => ({ ...item, selected }));
+    }
+
+    _handleCopyLink = async (e) => {
+        const { url } = e.detail;
+        await navigator.clipboard.writeText(url);
+
+        const searchBar = this.renderRoot.querySelector("url-search-bar");
+
+        if (searchBar) searchBar.value = url
+
+        this.isPlaylistMode = false;
+        await this._loadSingleVideo(url)
+    }
+
     _applyQualityDefault() {
         if (this.mode !== "video" || !this.videoOptions.length) return;
         this.selectedIndex = this.autoMaxQuality ? this.videoOptions.length - 1 : 0;
@@ -222,47 +292,35 @@ export class HomeView extends LitElement {
         return html`
         <url-search-bar .loading=${this.loading}></url-search-bar>
 
-        ${this.video
+        ${this.error ? html`<p class="error">${this.error}</p>` : ""}
+
+        ${this.isPlaylistMode
                 ? html`
-                  <video-preview-card .video=${this.video}></video-preview-card>
-                  <format-toggle .mode=${this.mode}></format-toggle>
-
-                  <download-options-panel
-                      .options=${this._currentOptions}
-                      .selectedIndex=${this.selectedIndex}
-                      .disabled=${this.autoMaxQuality && this.mode === "video"}
-                  ></download-options-panel>
-
-                  <filename-input
-                      .value=${this.customFilename}
-                      placeholder=${t("home.filename_placeholder")}
-                  ></filename-input>
-
-                  ${this.subfolderPreview
-                        ? html`<p class="subfolder-hint">📁 Se guardará en: ${this._outputDirectory}/${this.subfolderPreview}/</p>`
-                        : ""}
-
-                  <folder-picker
-                      .path=${this._outputDirectory}
-                      .editable=${this.folderMode === "manual"}
-                  ></folder-picker>
-
-                  ${this.downloading || this.downloadSuccess
-                        ? html`<download-progress-bar .active=${this.downloading}></download-progress-bar>`
-                        : ""}
-
-                  ${this.error ? html`<p class="error">${this.error}</p>` : ""}
-                  ${this.downloadSuccess ? html`<p class="success">${t("home.download_success")}</p>` : ""}
-
-                  <button
-                      class="download-btn"
-                      @click=${this._handleDownload}
-                      ?disabled=${this.downloading || !this._currentOptions.length}
-                  >
-                        ${this.downloading ? t("home.downloading") : t("home.download_button")}
-                  </button>
+                  <h3 class="playlist-title">${this.playlistTitle}</h3>
+                  <playlist-panel .items=${this.playlistItems}></playlist-panel>
+                  <p class="hint">Selección y formatos de playlist — próximamente.</p>
               `
-                : ""}
+                : this.video
+                    ? html`
+                    <video-preview-card .video=${this.video}></video-preview-card>
+                    <format-toggle .mode=${this.mode}></format-toggle>
+                    <download-options-panel
+                        .options=${this._currentOptions}
+                        .selectedIndex=${this.selectedIndex}
+                        .disabled=${this.autoMaxQuality && this.mode === "video"}
+                    ></download-options-panel>
+                    <filename-input .value=${this.customFilename} placeholder=${t("home.filename_placeholder")}></filename-input>
+                    ${this.subfolderPreview
+                            ? html`<p class="subfolder-hint">📁 ${t("settings.folder.subfolder_preview_prefix")} ${this._outputDirectory}/${this.subfolderPreview}/</p>`
+                            : ""}
+                    <folder-picker .path=${this._outputDirectory} .editable=${this.folderMode === "manual"}></folder-picker>
+                    ${this.downloading || this.downloadSuccess ? html`<download-progress-bar .active=${this.downloading}></download-progress-bar>` : ""}
+                    ${this.downloadSuccess ? html`<p class="success">${t("home.download_success")}</p>` : ""}
+                    <button class="download-btn" @click=${this._handleDownload} ?disabled=${this.downloading || !this._currentOptions.length}>
+                        ${this.downloading ? t("home.downloading") : t("home.download_button")}
+                    </button>
+                `
+                    : ""}
     `;
     }
 }

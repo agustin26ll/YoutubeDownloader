@@ -61,3 +61,13 @@
     border-radius: var(--radius);
     word-break: break-all;
 }
+
+.playlist-tittle {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+}
+
+.hint {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary)
+}

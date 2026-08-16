@@ -112,5 +112,8 @@
     "process_file": "Procesando archivo...",
     "complete": "✓ Completado",
     "error_download": "Error en la descarga"
+  },
+  "playlist": {
+    "select_all": "Seleccionar todos"
   }
 }
