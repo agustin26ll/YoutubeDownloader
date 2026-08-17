@@ -26,6 +26,10 @@ export async function downloadVideo(optionIndex, outputDirectory, isAudio, custo
     return await window.pywebview.api.download(optionIndex, outputDirectory, isAudio,  customFilename || null);
 }
 
+export async function resolvePlaylistItem(videoId, url, isAudio) {
+    return await window.pywebview.api.resolve_playlist_item(videoId, url, isAudio)
+}
+
 // CONFIGURACION DE NOMENCLATURA Y PREVISUALIZACION DE NOMBRE DE ARCHIVO
 
 export async function updateNamingExpression(expression) {

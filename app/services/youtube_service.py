@@ -51,10 +51,14 @@ class YoutubeService:
 
     def _extract_info(self, url:str) -> dict:
         try:
-            with yt_dlp.YoutubeDL({"quiet": True}) as ydl:
+            with yt_dlp.YoutubeDL({"quiet": True, "socket_timeout": 15 }) as ydl:
                 return ydl.extract_info(url, download=False)
         except yt_dlp.utils.DownloadError as e:
             message = str(e).lower()
+
+            if "sign in" in message and ("bot" in message or "confirm" in message ):
+                raise VideoUnavailableError(t("errors.bot_verification_required")) from e
+
             if any(marker in message for marker in _UNAVAILABLE_MARKERS):
                 raise VideoUnavailableError(t("errors.video_unavailable")) from e
             raise VideoNotFoundError(t("errors.video_not_found")) from e

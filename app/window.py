@@ -48,6 +48,7 @@ class API:
         self._last_video = None
         self._last_video_options = []
         self._last_audio_options = []
+        self._playlist_options = {}
 
     def _t(self, key: str) -> str:
         return t(key, locale=self._locale)
@@ -231,6 +232,36 @@ class API:
         except Exception:
             self._emit_progress({"status": "error"})
             return {"success": False, "error": self._t("errors.download_failed"), "error_type": "UnknownError"}
+
+    def resolve_playlist_item(self, video_id: str, url: str, is_audio: bool) -> dict:
+        try:
+            video = self.controller.get_video(url)
+            video_options = self.controller.get_download_options(video)
+            audio_options = self.controller.get_audio_options(video)
+
+            self._playlist_options[video_id] = {
+                "video_options": video_options,
+                "auido_options": audio_options,
+            }
+
+            options = audio_options if is_audio else video_options
+
+            if not options:
+                return { "success" : False, "video_id": video_id, "error": self._t("errors.no_formats_available")}
+
+            default_index = 0 if is_audio else len(options) - 1
+
+            return {
+                "success" : True,
+                "video_id": video_id,
+                "default_index": default_index,
+                "options": [{"index": i, "label": o.label} for i, o in enumerate(options)],
+            }
+        except VideoDownloadError as e:
+            return { "success" : False, "video_id": video_id, "error": str(e)}
+        except Exception:
+            return { "success" : False, "video_id": video_id, "error": self._t("errors.unexpected")}
+
 
     # FUNCIONALIDADES DE SELECCIÓN, VERIFICACIÓN, CREACIÓN Y APERTURA DE CARPETAS
 

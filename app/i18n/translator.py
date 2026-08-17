@@ -12,7 +12,7 @@ def _load(locale: str) -> dict:
 
     if not path.exists():
         return {}
-    return json.loads(path.read_text(encoding="uft-8"))
+    return json.loads(path.read_text(encoding="utf-8"))
 
 def t(key: str, locale: str = _DEFAULT_LOCALE) -> str:
     messages = _load(locale)

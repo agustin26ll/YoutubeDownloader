@@ -18,7 +18,8 @@ import {
     previewFilename,
     previewSubfolder,
     checkIsPlaylist,
-    getPlaylist
+    getPlaylist,
+    resolvePlaylistItem
 } from "../services/api-bridge.js";
 import { pywebviewReady } from "../services/bridge-ready.js";
 
@@ -44,6 +45,10 @@ export class HomeView extends LitElement {
         isPlaylistMode: { type: Boolean, state: true },
         playlistTitle: { type: String, state: true },
         playlistItems: { type: Array, state: true },
+        playlistMode: { type: String, state: true },
+        playlistManualSelect: { type: Boolean, state: true },
+        playlistQualityLabels: { type: Object, state: true },
+        playlistResolvingIds: { type: Object, state: true }
     };
 
     static styles = css([styles]);
@@ -69,6 +74,11 @@ export class HomeView extends LitElement {
         this.isPlaylistMode = false;
         this.playlistTitle = "";
         this.playlistItems = [];
+
+        this.playlistMode = "video";
+        this.playlistManualSelect = false,
+            this.playlistQualityLabels = {},
+            this.playlistResolvingIds = new Set();
     }
 
     async connectedCallback() {
@@ -82,6 +92,8 @@ export class HomeView extends LitElement {
         this.addEventListener("item-toggle", this._handleToggleItem);
         this.addEventListener("toggle-all", this._handleToggleAll);
         this.addEventListener("item-copy-link", this._handleCopyLink);
+        this.addEventListener("manual-mode-change", this._handlePlaylistManualToggle);
+        this.addEventListener("item-quality-change", this._handlePlaylistQualityChange);
 
         this._loadSettings();
     }
@@ -97,6 +109,9 @@ export class HomeView extends LitElement {
         this.removeEventListener("item-toggle", this._handleToggleItem);
         this.removeEventListener("toggle-all", this._handleToggleAll);
         this.removeEventListener("item-copy-link", this._handleCopyLink);
+        this.removeEventListener("manual-mode-change", this._handlePlaylistManualToggle);
+        this.removeEventListener("item-quality-change", this._handlePlaylistQualityChange);
+
     }
 
     // HANDLERS
@@ -186,7 +201,36 @@ export class HomeView extends LitElement {
             ...item,
             selected: true,
             error: null,
+            options: [],
+            selectedOptionIndex: 0
         }));
+
+        await this._resolveAllQualities();
+    }
+
+    async _resolveAllQualities() {
+        const isAudio = this.playlistMode === "audio";
+
+        for (const item of this.playlistItems) {
+            this.playlistResolvingIds = new Set(this.playlistResolvingIds).add(item.video_id);
+            this.requestUpdate();
+
+            const result = await resolvePlaylistItem(item.video_id, item.url, isAudio);
+
+            this.playlistResolvingIds = new Set(this.playlistResolvingIds);
+            this.playlistResolvingIds.delete(item.video_id);
+
+            if (!result.success) {
+                this.playlistItems = this.playlistItems.map((i) =>
+                    i.video_id === item.video_id ? { ...i, error: result.error, selected: false } : i
+                );
+                continue;
+            }
+
+            this.playlistItems = this.playlistItems.map((i) =>
+                i.video_id === item.video_id ? { ...i, options: result.options, selectedOptionIndex: result.default_index } : i
+            )
+        }
     }
 
     // Handler de búsqueda de video, que se activa cuando el usuario ingresa una URL y presiona Enter.
@@ -275,6 +319,29 @@ export class HomeView extends LitElement {
         await this._loadSingleVideo(url)
     }
 
+    _handlePlaylistFormatChange = async (e) => {
+        e.stopPropagation();
+        this.playlistMode = e.detail.mode;
+        this.playlistQualityLabels = {};
+        await this._resolveAllQualities();
+    }
+
+    _handlePlaylistManualToggle = (e) => {
+        this.playlistManualSelect = e.detail.manual;
+    }
+
+    _handlePlaylistQualityChange = (e) => {
+        const { videoId, index } = e.detail;
+        this.playlistItems = this.playlistItems.map((item) =>
+            item.video_id === videoId ? { ...item, selectedOptionIndex: index } : item
+        );
+
+        this.playlistQualityLabels = {
+            ...this.playlistQualityLabels,
+            [videoId]: this.playlistItems.find((i) => i.video_id === videoId)?.options[index]?.label || "",
+        }
+    }
+
     _applyQualityDefault() {
         if (this.mode !== "video" || !this.videoOptions.length) return;
         this.selectedIndex = this.autoMaxQuality ? this.videoOptions.length - 1 : 0;
@@ -297,8 +364,14 @@ export class HomeView extends LitElement {
         ${this.isPlaylistMode
                 ? html`
                   <h3 class="playlist-title">${this.playlistTitle}</h3>
-                  <playlist-panel .items=${this.playlistItems}></playlist-panel>
-                  <p class="hint">Selección y formatos de playlist — próximamente.</p>
+                  <format-toggle .mode=${this.playlistMode} @mode-changed=${this._handlePlaylistFormatChange}></format-toggle>
+                  <playlist-panel
+                      .items=${this.playlistItems}
+                      .qualityLabels=${this.playlistQualityLabels}
+                      .resolvingIds=${this.playlistResolvingIds}
+                      .manualMode=${this.playlistManualSelect}
+                  ></playlist-panel>
+                  <p class="hint">Descarga de playlist — próximamente (Día 4).</p>
               `
                 : this.video
                     ? html`

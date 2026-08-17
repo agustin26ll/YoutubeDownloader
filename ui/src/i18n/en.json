@@ -15,7 +15,8 @@
     "history_item_not_found": "Item not found.",
     "history_folder_missing": "The original folder no longer exists.",
     "no_formats_available": "No formats available for this video.",
-    "folder_no_longer_exists": "The folder no longer exists."
+    "folder_no_longer_exists": "The folder no longer exists.",
+    "bot_verification_required": "This video requires additional YouTube verification and cannot be downloaded"
   },
   "sidebar": {
     "home": "Home",
@@ -113,6 +114,7 @@
     "error_download": "Download error"
   },
   "playlist": {
-    "select_all": "Select all"
+    "select_all": "Select all",
+    "choose_per_item": "Choose per item"
   }
 }
