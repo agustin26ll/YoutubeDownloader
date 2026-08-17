@@ -12,6 +12,8 @@ export class DownloadProgressBar extends LitElement {
         totalMb: { type: Number, state: true },
         speedMbS: { type: Number, state: true },
         etaSeconds: { type: Number, state: true },
+        playlistIndex: { type: Number, state: true },
+        playlistTotal: { type: Number, state: true },
     };
 
     static styles = css([styles]);
@@ -40,6 +42,8 @@ export class DownloadProgressBar extends LitElement {
         this.totalMb = null;
         this.speedMbS = null;
         this.etaSeconds = null;
+        this.playlistIndex = null;
+        this.playlistTotal = null;
     }
 
     _handleProgress(e) {
@@ -52,6 +56,8 @@ export class DownloadProgressBar extends LitElement {
             this.totalMb = d.total_mb;
             this.speedMbS = d.speed_mb_s;
             this.etaSeconds = d.eta_seconds;
+            this.playlistIndex = d.playlist_index ?? null;
+            this.playlistTotal = d.playlist_total ?? null;
         } else if (d.status === "completed") {
             this.percent = 100;
         }
@@ -67,26 +73,29 @@ export class DownloadProgressBar extends LitElement {
         if (!this.active) return html``;
 
         return html`
-            <div class="wrapper">
-                <div class="bar-track">
-                    <div class="bar-fill ${this.status}" style="width: ${this.percent}%"></div>
-                </div>
-                <div class="info">
-                    ${this.status === "processing"
-                        ? html`<span>${t("status.process_file")}</span>`
-                        : this.status === "completed"
-                          ? html`<span class="done">${t("status.complete")}</span>`
-                          : this.status === "error"
-                            ? html`<span class="error-text">${t("status.error_download")}</span>`
-                            : html`
-                                  <span>${formatMB(this.downloadedMb)} / ${formatMB(this.totalMb)}</span>
-                                  <span>${this.speedMbS ? `${this.speedMbS.toFixed(1)} MB/s` : ""}</span>
-                                  <span>${this.etaSeconds ? `ETA ${formatEta(this.etaSeconds)}` : ""}</span>
-                                  <span class="percent">${this.percent}%</span>
-                              `}
-                </div>
+        <div class="wrapper">
+            <div class="bar-track">
+                <div class="bar-fill ${this.status}" style="width: ${this.percent}%"></div>
             </div>
-        `;
+            <div class="info">
+                ${this.playlistTotal
+                ? html`<p class="playlist-progress">${this.playlistIndex} / ${this.playlistTotal}</p>`
+                : ""}
+                ${this.status === "processing"
+                ? html`<span>${t("status.process_file")}</span>`
+                : this.status === "completed"
+                    ? html`<span class="done">${t("status.complete")}</span>`
+                    : this.status === "error"
+                        ? html`<span class="error-text">${t("status.error_download")}</span>`
+                        : html`
+                              <span>${formatMB(this.downloadedMb)} / ${formatMB(this.totalMb)}</span>
+                              <span>${this.speedMbS ? `${this.speedMbS.toFixed(1)} MB/s` : ""}</span>
+                              <span>${this.etaSeconds ? `ETA ${formatEta(this.etaSeconds)}` : ""}</span>
+                              <span class="percent">${this.percent}%</span>
+                          `}
+            </div>
+        </div>
+    `;
     }
 }
 

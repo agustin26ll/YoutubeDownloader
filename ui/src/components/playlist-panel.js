@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit';
+import { repeat } from "lit/directives/repeat.js"
 import styles from "/src/styles/components/playlist-panel.css?inline";
 import "./playlist-item-row.js";
 import { t } from "../i18n/index.js";
@@ -76,16 +77,17 @@ export class PlaylistPanel extends LitElement {
         </div>
 
         <div class="scroll-container">
-            ${this.items.map(
-            (item) => html`
-                    <playlist-item-row
-                        .item=${item}
-                        .qualityLabel=${this.qualityLabels[item.video_id] || ""}
-                        .resolving=${this.resolvingIds?.has(item.video_id) || false}
-                        .showManualSelect=${this.manualMode}
-                    ></playlist-item-row>
-                `
-        )}
+            ${repeat(
+                this.items,
+                (item) => item.video_id,
+                (item) => html`
+                <playlist-item-row
+                    .item=${item}
+                    .qualityLabel=${this.qualityLabels[item.video_id] || ""}
+                    .resolving=${this.resolvingIds?.has(item.video_id) || false}
+                    .showManualSelect=${this.manualMode}
+                ></playlist-item-row>`
+            )}
         </div>
     `;
     }

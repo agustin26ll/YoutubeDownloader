@@ -9,11 +9,13 @@ import json
 from app.config.env import IS_DEV, VITE_DEV_URL, WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT
 from app.models.download_request import DownloadRequest
 from app.models.video import Video
+from app.models.queue_item import QueueItem
 from app.controllers.download_controller import DownloadController
 from app.services.youtube_service import YoutubeService
 from app.services.settings_service import SettingsService
 from app.services.history_service import HistoryService
 from app.services.playlist_service import PlaylistService
+from app.services.download_queue_service import DownloadQueueService
 from app.exceptions.video_download_exceptions import VideoDownloadError
 from app.i18n.translator import t
 from app.i18n.locale_resolver import resolve_locale
@@ -42,6 +44,7 @@ class API:
         self.controller = controller
         self.settings_service = settings_service
         self.history_service = history_service
+        self.queue_service = DownloadQueueService(controller, history_service, self._on_queue_event)
         self._locale = resolve_locale(settings_service.load())
         self.playlist_service = PlaylistService()
         self._last_url = None
@@ -112,7 +115,7 @@ class API:
         filename = FilenameFormatter().build(sample, expression)
         return {"filename": filename}
 
-    # FUNCIONALIDADES DE VIDEO Y DESCARGA
+    # FUNCIONALIDADES DE VIDEO Y DESCARGA: PLAYLIST Y ARCHIVO INDIVIDUAL
     
     def get_video(self, url: str) -> dict:
         try:
@@ -262,6 +265,130 @@ class API:
         except Exception:
             return { "success" : False, "video_id": video_id, "error": self._t("errors.unexpected")}
 
+    def download_playlist(self, items: list[dict], output_directory: str) -> dict:
+        resolved_dir = Path(output_directory).expanduser().resolve()
+
+        if not resolved_dir.exists():
+            return { "success": False, "error": self._t("errors.folder_missing")}
+
+        total = len(items)
+        results = []
+
+        for index, item in enumerate(items, start=1):
+            video_id = item["video_id"]
+            cached = self._playlist_options.get(video_id)
+
+            if not cached:
+                results.append({"video_id": video_id, "success": False, "error": self._t("errors.no_formats_available")})
+                continue
+
+            options_list = cached["audio_options"] if item["is_audio"] else cached["video_options"]
+            option_index = item["option_index"]
+
+            if option_index >= len(options_list):
+                results.append({"video_id": video_id, "success": False, "error": self._t("errors.no_formats_available")})
+                continue
+
+            selected_option = options_list[option_index]
+            last_emit = { "t": 0.0 }
+
+            def on_progress(d: dict, video_id=video_id, index=index) -> None:
+                status = d.get("status")
+
+                if status != "downloading":
+                    return
+
+                now = time.time()
+                if now - last_emit["t"] < PROGRESS_EMIT_INTERVAL_S:
+                    return
+                last_emit["t"] = now
+
+                downloaded = d.get("downloaded_bytes") or 0
+                total_bytes = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
+                percent = round((downloaded / total_bytes * 100), 1) if total_bytes else 0
+
+                self._emit_progress({
+                    "status": "downloading",
+                    "percent": percent,
+                    "downloaded_mb": round(downloaded / BYTES_PER_MB, 2),
+                    "total_mb": round(total_bytes / BYTES_PER_MB, 2) if total_bytes else None,
+                    "speed_mb_s": round((d.get("speed") or 0) / BYTES_PER_MB, 2),
+                    "eta_seconds": d.get("eta"),
+                    "playlist_index": index,
+                    "playlist_total": total,
+                    "video_id": video_id,
+                })
+
+            try:
+                request = DownloadRequest(url=item["url"], output_directory=resolved_dir, options=selected_option)
+                filename, effective_dir = self.controller.download(request, progress_callback=on_progress)
+
+                extension = _AUDIO_EXTENSIONS.get(selected_option.audio_codec, "mp3") if item["is_audio"] else "mp4"
+
+                self.history_service.add({
+                    "url": item["url"],
+                    "title": item.get("title", filename),
+                    "uploader": item.get("uploader", ""),
+                    "thumbnail": item.get("thumbnail", ""),
+                    "duration_seconds": item.get("duration_seconds", 0),
+                    "quality_label": selected_option.label,
+                    "output_directory": str(effective_dir),
+                    "filename": filename,
+                    "extension": extension,
+                    "is_audio": item["is_audio"],
+                    "format_string": selected_option.format_string,
+                    "audio_codec": selected_option.audio_codec,
+                })
+
+                results.append({ "video_id": video_id, "success": True })
+
+            except VideoDownloadError as e:
+                results.append({ "video_id": video_id, "success": False, "error": str(e)})
+            except Exception:
+                results.append({ "video_id": video_id, "success": False, "error": self._t("errors.download_failed")})
+
+        self._emit_progress({"status": "playlist_completed"})
+
+        return { "success": True, "results": results }
+
+    # FUNCIONALIDADES DE COLA
+
+    def _on_queue_event(self, event_type: str, payload: dict) -> None:
+        self._emit_progress({"event": event_type, **payload }) if event_type == "download-progress" else self._emit_js_event(event_type, payload)
+
+    def _emit_js_event(self, event_name: str, payload: dict) -> None:
+        try:
+            webview.windows[0].evaluate_js(
+                f"window.dispatchEvent(new CustomEvent('{event_name}', {{ detail: {json.dumps(payload)} }} ))"
+            )
+        except Exception:
+            pass
+
+    def enqueue_download(self, url: str, title:str, thumbnail: str, option_index: int, output_directory: str, is_audio: bool, custom_filename: str | None = None) -> dict:
+        options_list = self._last_audio_options if is_audio else self._last_video_options
+
+        if option_index >= len(options_list):
+            return {"success": False, "error": self._t("errors.no_valid_selection")}
+
+        item = QueueItem.create(
+            url=url,
+            title=title,
+            thumbnail=thumbnail,
+            output_directory=Path(output_directory).expanduser().resolve(),
+            option=options_list[option_index],
+            is_audio=is_audio,
+            custom_filename=custom_filename
+        )
+
+        self.queue_service.enqueue(item)
+        return {"success": True, "queue_id": item.id}
+
+    def get_queue_snapshot(self) -> dict:
+        return {"items": self.queue_service.get_snapshot()}
+    
+    def cancel_current_download(self) -> dict:
+        self.queue_service.cancel_current()
+        return {"success": True}
 
     # FUNCIONALIDADES DE SELECCIÓN, VERIFICACIÓN, CREACIÓN Y APERTURA DE CARPETAS
 
