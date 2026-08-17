@@ -243,7 +243,8 @@ export class HomeView extends LitElement {
                         : i
                 );
             },
-            concurrency
+            concurrency,
+            150
         );
     }
 

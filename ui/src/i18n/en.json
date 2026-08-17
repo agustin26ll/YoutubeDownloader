@@ -16,7 +16,8 @@
     "history_folder_missing": "The original folder no longer exists.",
     "no_formats_available": "No formats available for this video.",
     "folder_no_longer_exists": "The folder no longer exists.",
-    "bot_verification_required": "This video requires additional YouTube verification and cannot be downloaded"
+    "bot_verification_required": "This video requires additional YouTube verification and cannot be downloaded",
+    "rate_limited": "YouTube is temporarily rate-limiting requests. Wait a few minutes and try again."
   },
   "sidebar": {
     "home": "Home",

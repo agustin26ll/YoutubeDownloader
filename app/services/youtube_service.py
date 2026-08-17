@@ -1,5 +1,5 @@
 from pathlib import Path
-
+import time
 import yt_dlp
 from app.models.video import Video
 from app.models.settings import Settings
@@ -30,6 +30,9 @@ _UNAVAILABLE_MARKERS = (
     "this video has been removed",
 )
 
+_MAX_RETRIES = 2
+_RETRY_BACKOFF_S = 3
+
 class YoutubeService:
 
     DOWNLOADS_FOLDER = Path("downloads")
@@ -50,18 +53,29 @@ class YoutubeService:
         self.filename_formatter = filename_formatter or FilenameFormatter()
 
     def _extract_info(self, url:str) -> dict:
-        try:
-            with yt_dlp.YoutubeDL({"quiet": True, "socket_timeout": 15 }) as ydl:
-                return ydl.extract_info(url, download=False)
-        except yt_dlp.utils.DownloadError as e:
-            message = str(e).lower()
+        last_error = None
 
-            if "sign in" in message and ("bot" in message or "confirm" in message ):
-                raise VideoUnavailableError(t("errors.bot_verification_required")) from e
+        for attempt in range(_MAX_RETRIES + 1):
+            try:
+                with yt_dlp.YoutubeDL({"quiet": True, "socket_timeout": 15 }) as ydl:
+                    return ydl.extract_info(url, download=False)
+            except yt_dlp.utils.DownloadError as e:
+                message = str(e).lower()
 
-            if any(marker in message for marker in _UNAVAILABLE_MARKERS):
-                raise VideoUnavailableError(t("errors.video_unavailable")) from e
-            raise VideoNotFoundError(t("errors.video_not_found")) from e
+                if "429" in message or "too many request" in message:
+                    last_error = e
+                    if attempt < _MAX_RETRIES:
+                        time.sleep(_RETRY_BACKOFF_S * (attempt + 1))
+
+                if "sign in" in message and ("bot" in message or "confirm" in message ):
+                    raise VideoUnavailableError(t("errors.bot_verification_required")) from e
+                
+                if any(marker in message for marker in _UNAVAILABLE_MARKERS):
+                    raise VideoUnavailableError(t("errors.video_unavailable")) from e
+
+                raise VideoNotFoundError(t("errors.video_not_found")) from e
+
+        raise VideoUnavailableError(t("errors.rate_limited")) from last_error
             
     def _build_download_options(self, request: DownloadRequest, settings: Settings, filename: str) -> dict:
         base = {
