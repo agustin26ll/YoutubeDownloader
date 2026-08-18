@@ -244,7 +244,7 @@ class API:
 
             self._playlist_options[video_id] = {
                 "video_options": video_options,
-                "auido_options": audio_options,
+                "audio_options": audio_options,
             }
 
             options = audio_options if is_audio else video_options
@@ -354,19 +354,18 @@ class API:
     # FUNCIONALIDADES DE COLA
 
     def _on_queue_event(self, event_type: str, payload: dict) -> None:
-        self._emit_progress({"event": event_type, **payload }) if event_type == "download-progress" else self._emit_js_event(event_type, payload)
+        self._emit_progress({"event": event_type, **payload}) if event_type == "download-progress" else self._emit_js_event(event_type, payload)
 
     def _emit_js_event(self, event_name: str, payload: dict) -> None:
         try:
             webview.windows[0].evaluate_js(
-                f"window.dispatchEvent(new CustomEvent('{event_name}', {{ detail: {json.dumps(payload)} }} ))"
+                f"window.dispatchEvent(new CustomEvent('{event_name}', {{ detail: {json.dumps(payload)} }}))"
             )
         except Exception:
             pass
 
-    def enqueue_download(self, url: str, title:str, thumbnail: str, option_index: int, output_directory: str, is_audio: bool, custom_filename: str | None = None) -> dict:
+    def enqueue_download(self, url: str, title: str, thumbnail: str, option_index: int, output_directory: str, is_audio: bool, custom_filename: str | None = None) -> dict:
         options_list = self._last_audio_options if is_audio else self._last_video_options
-
         if option_index >= len(options_list):
             return {"success": False, "error": self._t("errors.no_valid_selection")}
 
@@ -377,9 +376,8 @@ class API:
             output_directory=Path(output_directory).expanduser().resolve(),
             option=options_list[option_index],
             is_audio=is_audio,
-            custom_filename=custom_filename
+            custom_filename=custom_filename,
         )
-
         self.queue_service.enqueue(item)
         return {"success": True, "queue_id": item.id}
 

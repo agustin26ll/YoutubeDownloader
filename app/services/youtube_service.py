@@ -52,24 +52,25 @@ class YoutubeService:
         self.settings_service = settings_service or SettingsService()
         self.filename_formatter = filename_formatter or FilenameFormatter()
 
-    def _extract_info(self, url:str) -> dict:
+    def _extract_info(self, url: str) -> dict:
         last_error = None
 
         for attempt in range(_MAX_RETRIES + 1):
             try:
-                with yt_dlp.YoutubeDL({"quiet": True, "socket_timeout": 15 }) as ydl:
+                with yt_dlp.YoutubeDL({"quiet": True, "socket_timeout": 15}) as ydl:
                     return ydl.extract_info(url, download=False)
             except yt_dlp.utils.DownloadError as e:
                 message = str(e).lower()
 
-                if "429" in message or "too many request" in message:
+                if "429" in message or "too many requests" in message:
                     last_error = e
                     if attempt < _MAX_RETRIES:
                         time.sleep(_RETRY_BACKOFF_S * (attempt + 1))
+                        continue
 
-                if "sign in" in message and ("bot" in message or "confirm" in message ):
+                if "sign in to confirm" in message or "not a bot" in message:
                     raise VideoUnavailableError(t("errors.bot_verification_required")) from e
-                
+
                 if any(marker in message for marker in _UNAVAILABLE_MARKERS):
                     raise VideoUnavailableError(t("errors.video_unavailable")) from e
 

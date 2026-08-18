@@ -4,15 +4,10 @@ import time
 
 from app.models.queue_item import QueueItem
 from app.models.download_request import DownloadRequest
+from yt_dlp.utils import DownloadCancelled
 from app.exceptions.video_download_exceptions import VideoDownloadError
 
-BYTES_PER_MB = 1_048_576
-
-class DownloadCancelled(Exception):
-    pass
-
 class DownloadQueueService:
-
     def __init__(self, controller, history_service, on_event):
         self.controller = controller
         self.history_service = history_service
@@ -38,11 +33,11 @@ class DownloadQueueService:
     def cancel_current(self) -> None:
         self._cancel_flag.set()
 
-    def get_snapshot(self) -> None:
+    def get_snapshot(self) -> list[dict]:
         with self._lock:
             return [self._to_dict(self._items[iid]) for iid in self._order]
 
-    def _to_dict(self, item: QueueItem ) -> None:
+    def _to_dict(self, item: QueueItem) -> dict:
         return {
             "id": item.id,
             "title": item.title,
@@ -53,7 +48,7 @@ class DownloadQueueService:
         }
 
     def _emit_queue_updated(self) -> None:
-        self._on_event("queue-updated", { "items": self.get_snapshot()})
+        self._on_event("queue-updated", {"items": self.get_snapshot()})
 
     def _run(self) -> None:
         while True:
@@ -81,8 +76,7 @@ class DownloadQueueService:
                     output_directory=item.output_directory,
                     options=item.option,
                 )
-
-                filename, effective_dir = self.controller.dowload(
+                filename, effective_dir = self.controller.download(
                     request, progress_callback=on_progress, custom_filename=item.custom_filename
                 )
 
@@ -92,7 +86,7 @@ class DownloadQueueService:
                     "uploader": "",
                     "thumbnail": item.thumbnail,
                     "duration_seconds": 0,
-                    "quality_label": item.option_label,
+                    "quality_label": item.option.label,
                     "output_directory": str(effective_dir),
                     "filename": filename,
                     "extension": "mp3" if item.is_audio else "mp4",
@@ -117,13 +111,12 @@ class DownloadQueueService:
             self._queue.task_done()
 
     def _progress_payload(self, d: dict) -> dict:
-        downloaded = d.get("download_bytes") or 0
-        total = d.get("total_byyes") or d.get("total_bytes_estimate") or 0
+        downloaded = d.get("downloaded_bytes") or 0
+        total = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
         return {
             "percent": round((downloaded / total * 100), 1) if total else 0,
-            "downloaded_mb": round(downloaded / BYTES_PER_MB, 2),
-            "total_mb": round(total / BYTES_PER_MB, 2) if total else None,
-            "speed_mb_s": round((d.get("speed") or 0) / BYTES_PER_MB, 2),
+            "downloaded_mb": round(downloaded / 1_048_576, 2),
+            "total_mb": round(total / 1_048_576, 2) if total else None,
+            "speed_mb_s": round((d.get("speed") or 0) / 1_048_576, 2),
             "eta_seconds": d.get("eta"),
         }
-        

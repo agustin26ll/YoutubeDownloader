@@ -8,7 +8,7 @@ import "../components/format-toggle.js";
 import "../components/download-progress-bar.js";
 import "../components/filename-input.js";
 import "../components/playlist-panel.js";
-import { runWithConcurrency, resolveConcurrency } from "../utils/concurrency-pool.js";
+import { runSequential } from "../utils/concurrency-pool.js";
 import { t } from "../i18n/index.js";
 
 import {
@@ -212,9 +212,8 @@ export class HomeView extends LitElement {
 
     async _resolveAllQualities() {
         const isAudio = this.playlistMode === "audio";
-        const concurrency = resolveConcurrency(this.playlistItems.length);
 
-        await runWithConcurrency(
+        await runSequential(
             this.playlistItems,
             async (item) => {
                 this.playlistResolvingIds = new Set(this.playlistResolvingIds).add(item.video_id);
@@ -243,8 +242,7 @@ export class HomeView extends LitElement {
                         : i
                 );
             },
-            concurrency,
-            150
+            300
         );
     }
 
@@ -378,7 +376,7 @@ export class HomeView extends LitElement {
             is_audio: this.playlistMode === "audio",
             title: item.title,
             thumbnail: item.thumbnail,
-            duration__seconds: item.duration__seconds
+            duration_seconds: item.duration_seconds
         }));
 
         const result = await downloadPlaylist(payload, this._outputDirectory);
@@ -390,14 +388,13 @@ export class HomeView extends LitElement {
             return;
         }
 
-        const failedIds = new Set(result.result.filter((r) => !r.success).map((r) => r.video_id));
+        const failedIds = new Set(result.results.filter((r) => !r.success).map((r) => r.video_id));
 
         this.playlistItems = this.playlistItems.map((item) =>
             failedIds.has(item.video_id) ? { ...item, error: "No se pudo descargar" } : item
         );
 
         this.downloadSuccess = true;
-
     }
 
     _applyQualityDefault() {
@@ -421,34 +418,58 @@ export class HomeView extends LitElement {
 
         ${this.isPlaylistMode
                 ? html`
-          <h3 class="playlist-title">${this.playlistTitle}</h3>
-          <format-toggle .mode=${this.playlistMode} @mode-changed=${this._handlePlaylistFormatChange}></format-toggle>
-          <playlist-panel
-              .items=${this.playlistItems}
-              .qualityLabels=${this.playlistQualityLabels}
-              .resolvingIds=${this.playlistResolvingIds}
-              .manualMode=${this.playlistManualSelect}
-          ></playlist-panel>
+                  <h3 class="playlist-title">${this.playlistTitle}</h3>
+                  <format-toggle .mode=${this.playlistMode} @mode-changed=${this._handlePlaylistFormatChange}></format-toggle>
+                  <playlist-panel
+                      .items=${this.playlistItems}
+                      .qualityLabels=${this.playlistQualityLabels}
+                      .resolvingIds=${this.playlistResolvingIds}
+                      .manualMode=${this.playlistManualSelect}
+                  ></playlist-panel>
 
-          <folder-picker .path=${this._outputDirectory} .editable=${this.folderMode === "manual"}></folder-picker>
+                  <folder-picker .path=${this._outputDirectory} .editable=${this.folderMode === "manual"}></folder-picker>
 
-          ${this.downloading || this.downloadSuccess
+                  ${this.downloading || this.downloadSuccess
                         ? html`<download-progress-bar .active=${this.downloading}></download-progress-bar>`
                         : ""}
 
-          ${this.error ? html`<p class="error">${this.error}</p>` : ""}
-          ${this.downloadSuccess ? html`<p class="success">${t("home.download_success")}</p>` : ""}
+                  ${this.error ? html`<p class="error">${this.error}</p>` : ""}
+                  ${this.downloadSuccess ? html`<p class="success">${t("home.download_success")}</p>` : ""}
 
-          <button
-              class="download-btn"
-              @click=${this._handlePlaylistDownload}
-              ?disabled=${this.downloading || !this.playlistItems.some((i) => i.selected && !i.error)}
-          >
-              ${this.downloading ? t("home.downloading") : t("home.download_button")}
-          </button>
-      `
+                  <button
+                      class="download-btn"
+                      @click=${this._handlePlaylistDownload}
+                      ?disabled=${this.downloading || !this.playlistItems.some((i) => i.selected && !i.error)}
+                  >
+                      ${this.downloading ? t("home.downloading") : t("home.download_button")}
+                  </button>
+              `
                 : this.video
-                    ? html`...`
+                    ? html`
+                    <video-preview-card .video=${this.video}></video-preview-card>
+                    <format-toggle .mode=${this.mode}></format-toggle>
+                    <download-options-panel
+                        .options=${this._currentOptions}
+                        .selectedIndex=${this.selectedIndex}
+                        .disabled=${this.autoMaxQuality && this.mode === "video"}
+                    ></download-options-panel>
+                    <filename-input .value=${this.customFilename} placeholder=${t("home.filename_placeholder")}></filename-input>
+                    ${this.subfolderPreview
+                            ? html`<p class="subfolder-hint">📁 ${t("settings.folder.subfolder_preview_prefix")} ${this._outputDirectory}/${this.subfolderPreview}/</p>`
+                            : ""}
+                    <folder-picker .path=${this._outputDirectory} .editable=${this.folderMode === "manual"}></folder-picker>
+                    ${this.downloading || this.downloadSuccess
+                            ? html`<download-progress-bar .active=${this.downloading}></download-progress-bar>`
+                            : ""}
+                    ${this.downloadSuccess ? html`<p class="success">${t("home.download_success")}</p>` : ""}
+                    <button
+                        class="download-btn"
+                        @click=${this._handleDownload}
+                        ?disabled=${this.downloading || !this._currentOptions.length}
+                    >
+                        ${this.downloading ? t("home.downloading") : t("home.download_button")}
+                    </button>
+                `
                     : ""}
     `;
     }
