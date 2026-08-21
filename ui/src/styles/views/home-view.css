@@ -71,3 +71,18 @@
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary)
 }
+
+.show-more-btn {
+    align-self: center;
+    padding: var(--space-sm) var(--space-lg);
+    font-size: var(--font-size-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    cursor: pointer;
+}
+
+.show-more-btn:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}

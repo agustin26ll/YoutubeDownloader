@@ -117,6 +117,7 @@
   },
   "playlist": {
     "select_all": "Seleccionar todos",
-    "choose_per_item": "Elegir por item"
+    "choose_per_item": "Elegir por item",
+    "show_more": "Mostrár más"
   }
 }

@@ -11,6 +11,7 @@ from app.services.video_format_parser import VideoFormatParser
 from app.services.download_option_builder import DownloadOptionBuilder
 from app.services.filename_formatter import FilenameFormatter
 from app.utils.text_cleaner import sanitize_filename
+from app.utils.yt_dlp_options import base_ydl_options
 from app.i18n.translator import t
 
 from app.exceptions.video_download_exceptions import (
@@ -57,7 +58,8 @@ class YoutubeService:
 
         for attempt in range(_MAX_RETRIES + 1):
             try:
-                with yt_dlp.YoutubeDL({"quiet": True, "socket_timeout": 15}) as ydl:
+                options = {**base_ydl_options(), "quiet": True, "socket_timeout": 15 }
+                with yt_dlp.YoutubeDL(options) as ydl:
                     return ydl.extract_info(url, download=False)
             except yt_dlp.utils.DownloadError as e:
                 message = str(e).lower()
@@ -80,6 +82,7 @@ class YoutubeService:
             
     def _build_download_options(self, request: DownloadRequest, settings: Settings, filename: str) -> dict:
         base = {
+            **base_ydl_options(),
             "ffmpeg_location": str(settings.ffmpeg_path),
             "outtmpl": str(request.output_directory / f"{filename}.%(ext)s"),
             "noplaylist": True,

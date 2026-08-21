@@ -4,6 +4,8 @@ from app.models.playlist import Playlist
 from app.models.playlist_item import PlaylistItem
 from app.exceptions.video_download_exceptions import PlaylistUnavailableError, VideoNotFoundError
 from app.utils.url_validator import is_youtube_url
+from app.utils.yt_dlp_options import base_ydl_options
+from app.i18n.translator import t
 
 _UNAVAILABLE_MARKERS = (
     "private",
@@ -13,6 +15,8 @@ _UNAVAILABLE_MARKERS = (
     "removed",
 )
 
+_MAX_PLAYLIST_ITEMS = 500
+
 
 class PlaylistService:
 
@@ -21,12 +25,13 @@ class PlaylistService:
 
     def get_playlist(self, url: str) -> Playlist:
         if not is_youtube_url(url):
-            raise VideoNotFoundError("La URL no corresponde a un video de YouTube válido.")
+            raise VideoNotFoundError(t("errors.invalid_url"))
 
         info = self._extract_flat(url)
 
         entries = info.get("entries") or []
         items = [self._parse_item(entry) for entry in entries if entry]
+        items = self._deduplicate(items)[:_MAX_PLAYLIST_ITEMS]
 
         return Playlist(
             title=info.get("title") or "Lista de reproducción",
@@ -34,8 +39,19 @@ class PlaylistService:
             items=items,
         )
 
+    def _deduplicate(self, items: list[PlaylistItem]) -> list[PlaylistItem]:
+        seen = set()
+        unique = []
+
+        for item in items:
+            if item.video_id in seen:
+                    continue
+            seen.add(item.video_id)
+            unique.append(item)
+        return unique
+
     def _extract_flat(self, url: str) -> dict:
-        options = {"quiet": True, "extract_flat": "in_playlist", "skip_download": True}
+        options = {**base_ydl_options(), "quiet": True, "extract_flat": "in_playlist", "skip_download": True}
         try:
             with yt_dlp.YoutubeDL(options) as ydl:
                 return ydl.extract_info(url, download=False)

@@ -26,6 +26,8 @@ import {
 import { pywebviewReady } from "../services/bridge-ready.js";
 
 const SUCCESS_DISPLAY_DELAY_MS = 700;
+const PLAYLIST_INITIAL_BATCH = 10;
+const PLAYLIST_BATCH_INCREMENT = 10;
 
 export class HomeView extends LitElement {
     static properties = {
@@ -50,7 +52,8 @@ export class HomeView extends LitElement {
         playlistMode: { type: String, state: true },
         playlistManualSelect: { type: Boolean, state: true },
         playlistQualityLabels: { type: Object, state: true },
-        playlistResolvingIds: { type: Object, state: true }
+        playlistResolvingIds: { type: Object, state: true },
+        playlistVisibleCount: { type: Number, state: true },
     };
 
     static styles = css([styles]);
@@ -81,6 +84,7 @@ export class HomeView extends LitElement {
         this.playlistManualSelect = false,
             this.playlistQualityLabels = {},
             this.playlistResolvingIds = new Set();
+        this.playlistVisibleCount = PLAYLIST_INITIAL_BATCH
     }
 
     async connectedCallback() {
@@ -206,15 +210,16 @@ export class HomeView extends LitElement {
             options: [],
             selectedOptionIndex: 0
         }));
+        this.playlistVisibleCount = PLAYLIST_INITIAL_BATCH;
 
-        await this._resolveAllQualities();
+        await this._resolveBatch(this.playlistItems.slice(0, this.playlistVisibleCount));
     }
 
-    async _resolveAllQualities() {
+    async _resolveBatch(itemsBatch) {
         const isAudio = this.playlistMode === "audio";
 
         await runSequential(
-            this.playlistItems,
+            itemsBatch,
             async (item) => {
                 this.playlistResolvingIds = new Set(this.playlistResolvingIds).add(item.video_id);
 
@@ -225,9 +230,10 @@ export class HomeView extends LitElement {
                 this.playlistResolvingIds = next;
 
                 if (!result.success) {
-                    this.playlistItems = this.playlistItems.map((i) =>
+                    this.playlistItems = this.playlistItems.map((i) => {
                         i.video_id === item.video_id ? { ...i, error: result.error, selected: false } : i
-                    );
+                    })
+
                     return;
                 }
 
@@ -237,13 +243,11 @@ export class HomeView extends LitElement {
                 };
 
                 this.playlistItems = this.playlistItems.map((i) =>
-                    i.video_id === item.video_id
-                        ? { ...i, options: result.options, selectedOptionIndex: result.default_index }
-                        : i
+                    i.video_id === item.video_id ? { ...i, options: result.options, selectedOptionIndex: result.default_index } : i
                 );
             },
-            300
-        );
+            SUCCESS_DISPLAY_DELAY_MS
+        )
     }
 
     // Handler de búsqueda de video, que se activa cuando el usuario ingresa una URL y presiona Enter.
@@ -336,7 +340,7 @@ export class HomeView extends LitElement {
         e.stopPropagation();
         this.playlistMode = e.detail.mode;
         this.playlistQualityLabels = {};
-        await this._resolveAllQualities();
+        await this._resolveBatch(this.playlistItems.slice(0, this.playlistVisibleCount));
     }
 
     _handlePlaylistManualToggle = (e) => {
@@ -361,7 +365,8 @@ export class HomeView extends LitElement {
 
         if (!ready) return;
 
-        const selectedItems = this.playlistItems.filter((i) => i.selected && !i.error);
+        const visibleItems = this.playlistItems.slice(0, this.playlistVisibleCount);
+        const selectedItems = visibleItems.filter((i) => i.selected && !i.error && i.option_index);
 
         if (!selectedItems.length) return;
 
@@ -397,6 +402,17 @@ export class HomeView extends LitElement {
         this.downloadSuccess = true;
     }
 
+    _handleShowMore = async () => {
+        const previousCount = this.playlistVisibleCount;
+        this.playlistVisibleCount = Math.min(
+            this.playlistVisibleCount + PLAYLIST_BATCH_INCREMENT,
+            this.playlistItems.length
+        );
+
+        const newBatch = this.playlistItems.slice(previousCountm, this.playlistVisibleCount);
+        await this._resolveBatch(newBatch);
+    }
+
     _applyQualityDefault() {
         if (this.mode !== "video" || !this.videoOptions.length) return;
         this.selectedIndex = this.autoMaxQuality ? this.videoOptions.length - 1 : 0;
@@ -421,11 +437,17 @@ export class HomeView extends LitElement {
                   <h3 class="playlist-title">${this.playlistTitle}</h3>
                   <format-toggle .mode=${this.playlistMode} @mode-changed=${this._handlePlaylistFormatChange}></format-toggle>
                   <playlist-panel
-                      .items=${this.playlistItems}
+                      .items=${this.playlistItems.slice(0, this.playlistVisibleCount)}
                       .qualityLabels=${this.playlistQualityLabels}
                       .resolvingIds=${this.playlistResolvingIds}
                       .manualMode=${this.playlistManualSelect}
                   ></playlist-panel>
+
+                  ${this.playlistVisibleCount < this.playlistItems.length
+                        ? html`<button class="show-more-btn" @click=${this._handleShowMore}>
+                        ${t("playlist.show_more")} (${this.playlistItems.length - this.playlistVisibleCount})
+                    </button>`
+                        : ""}
 
                   <folder-picker .path=${this._outputDirectory} .editable=${this.folderMode === "manual"}></folder-picker>
 
@@ -439,7 +461,7 @@ export class HomeView extends LitElement {
                   <button
                       class="download-btn"
                       @click=${this._handlePlaylistDownload}
-                      ?disabled=${this.downloading || !this.playlistItems.some((i) => i.selected && !i.error)}
+                      ?disabled=${this.downloading || !this.playlistVisibleCount.some((i) => i.selected && !i.error && i.options.length)}
                   >
                       ${this.downloading ? t("home.downloading") : t("home.download_button")}
                   </button>
